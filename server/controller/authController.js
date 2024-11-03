@@ -6,7 +6,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import cloudinary from '../config/cloudinary.js';
 import multer from 'multer';
-// const upload = multer({ storage }); 
 
 dotenv.config();
 
@@ -44,23 +43,23 @@ export const registerUser = async (req, res) => {
     }
 };
 
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, next) => {
     const { email, password } = req.body;
 
+    console.log('Login attempt with:', { email, password });
     // Checks if email and password are entered by user
     if (!email || !password) {
         return res.status(400).json({ error: 'Please enter email & password' });
     }
 
     try {
-        // Finding user in database
         const user = await User.findOne({ email }).select('+password');
         if (!user) {
             return res.status(401).json({ message: 'Invalid Email or Password' });
         }
 
         // Checks if password is correct or not
-        const isPasswordMatched = await user.comparePassword(password);
+        const isPasswordMatched = await User.comparePassword(password);
         if (!isPasswordMatched) {
             return res.status(401).json({ message: 'Invalid Email or Password' });
         }
@@ -71,7 +70,7 @@ export const loginUser = async (req, res) => {
         console.error('Login error:', error); // Log the error for debugging
         return res.status(500).json({ message: 'Server error' });
     }
-    sendToken(user, 200, res)
+    /*sendToken(User, 200, res)*/
 };
 
 export const getUserProfile = async (req, res) => {
@@ -79,7 +78,8 @@ export const getUserProfile = async (req, res) => {
 
     return res.status(200).json({
         success: true,
-        user
+        user,
+        role: user.role,
     })
 }
 
@@ -101,7 +101,7 @@ export const updateProfile = async (req, res) => {
 
     // Update avatar
     if (req.body.avatar !== '') {
-        let user = await User.findById(req.user.id)
+        let user = await User.findById(req.params.id)
         // console.log(user)
         const image_id = user.avatar.public_id;
         const res = await cloudinary.v2.uploader.destroy(image_id);
@@ -120,10 +120,11 @@ export const updateProfile = async (req, res) => {
         }
     }
 
-    const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+    const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
         new: true,
         runValidators: true,
-    })
+    });
+
     if (!user) {
         return res.status(401).json({ message: 'User Not Updated' })
     }
@@ -248,24 +249,18 @@ export const getUserDetails = async (req, res, next) => {
 
 export const updateUser = async(req, res) => {
     try {
-        const id = req.params.id;
-        console.log(`Updating user with ID: ${id}`);
-        console.log(`Request body: ${JSON.stringify(req.body)}`);
+        const userId = req.params.id;
+        const updateData = req.body; // Get the data from the request body
 
-        const userExist = await User.findById(id);
-            if (!userExist) {
-            return res.status(404).json({ message: "User not found" });
+        // Update the user in the database
+        const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
         }
 
-        const updatedData = await User.findByIdAndUpdate(id, req.body, {
-            new: true,
-            runValidators: true,
-            });
-          
-          console.log(`Updated user data: ${JSON.stringify(updatedData)}`);
-          res.status(200).json(updatedData);
-        } catch (error) {
-            console.error(`Error updating user: ${error.message}`);
-            res.status(500).json({ errorMessage: error.message });
-          }
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating user', error: error.message });
+    }
 };

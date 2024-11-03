@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import route from "./routes/userRoute.js";
 import cors from "cors";
 import cloudinary from "cloudinary";
+import userRoutes from './routes/userRoute.js'
 
 const app = express();
 app.use(bodyParser.json());
@@ -36,4 +37,5 @@ mongoose
     })
     .catch((error) => console.log(error));
 
-app.use("/api", route);
+app.use('/api', route);
+app.use('/api/users', userRoutes);

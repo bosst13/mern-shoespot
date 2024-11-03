@@ -78,17 +78,39 @@ const User = () => {
   const handleSubmit = async (e) => {
     e.preventDefault(); 
 
+    const formDataToSend = new FormData(); // Create a new FormData object
+    formDataToSend.append('name', formData.name);
+    formDataToSend.append('email', formData.email);
+    if (formData.password) formDataToSend.append('password', formData.password); // Only append if password is present
+    formDataToSend.append('role', formData.role);
+    formDataToSend.append('status', formData.status);
+    if (formData.avatar) formDataToSend.append('avatar', formData.avatar[0]); // Ensure you are appending the file
+
     try {
-      const response = await axios.put(`http://localhost:3000/api/update/user/${selectedUser._id}`, formData);
+      const token = localStorage.getItem('token');
+      console.log("Retrieved token:", token); 
+      if (!token) {
+          throw new Error('Authentication token not found');
+      }
+
+      const response = await axios.put(`http://localhost:3000/api/update/user/${selectedUser._id}`, 
+          formDataToSend, {
+              headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'multipart/form-data', // Ensure you set the content type
+              },
+          }
+      );
 
       const updatedUsers = users.map(user => 
-        user._id === response.data._id ? response.data : user
+          user._id === response.data._id ? response.data : user
       );
       setUsers(updatedUsers); 
       setIsModalOpen(false);  
-    } catch (error) {
-      console.log("Error updating user", error);
-    }
+  } catch (error) {
+      //console.log("Error updating user", error);
+      alert('Failed to update the user. Please try again.');
+  }
   };
 
   return (

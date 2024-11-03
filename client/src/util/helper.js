@@ -6,6 +6,7 @@ export const authenticate = (data, next) => {
         // console.log('authenticate', response)
         sessionStorage.setItem('token', JSON.stringify(data.token));
         sessionStorage.setItem('user', JSON.stringify(data.user));
+        sessionStorage.setItem('role', JSON.stringify(data.role));
         
     }
     next();
