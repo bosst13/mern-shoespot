@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+// import MUIDataTable from 'mui-datatables';
 import DataTable from 'react-data-table-component';
 import axios from 'axios';
 import "../../App.css";
@@ -61,7 +62,7 @@ const User = () => {
       name: user.name,
       email: user.email,
       password: '',
-      role: user.role,
+      role: user.role ? '1' : '0',
       status: user.status ? '1' : '0',
     });
     setIsModalOpen(true);
@@ -76,47 +77,56 @@ const User = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
 
-    const formDataToSend = new FormData(); // Create a new FormData object
+    const formDataToSend = new FormData();
+    if (formData.avatar && formData.avatar[0]) {
+        formDataToSend.append('avatar', formData.avatar[0]);
+    }
     formDataToSend.append('name', formData.name);
     formDataToSend.append('email', formData.email);
-    if (formData.password) formDataToSend.append('password', formData.password); // Only append if password is present
+    if (formData.password) formDataToSend.append('password', formData.password);
     formDataToSend.append('role', formData.role);
     formDataToSend.append('status', formData.status);
-    if (formData.avatar) formDataToSend.append('avatar', formData.avatar[0]); // Ensure you are appending the file
 
     try {
-      const token = localStorage.getItem('token');
-      console.log("Retrieved token:", token); 
-      if (!token) {
-          throw new Error('Authentication token not found');
-      }
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('Authentication token not found');
 
-      const response = await axios.put(`http://localhost:3000/api/update/user/${selectedUser._id}`, 
-          formDataToSend, {
-              headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'multipart/form-data', // Ensure you set the content type
-              },
-          }
-      );
+        if (!selectedUser || !selectedUser._id) throw new Error('User ID is undefined');
 
-      const updatedUsers = users.map(user => 
-          user._id === response.data._id ? response.data : user
-      );
-      setUsers(updatedUsers); 
-      setIsModalOpen(false);  
-  } catch (error) {
-      //console.log("Error updating user", error);
-      alert('Failed to update the user. Please try again.');
-  }
-  };
+        const response = await axios.put(
+            `http://localhost:3000/api/users/update/user/${selectedUser._id}`,
+            formDataToSend,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+
+        const updatedUsers = users.map(user =>
+            user._id === response.data._id ? response.data : user
+        );
+        setUsers(updatedUsers);
+        setIsModalOpen(false);
+
+    } catch (error) {
+        if (error.response) {
+            alert(`Failed to update the user: ${error.response.data.message || "Server error"}`);
+        } else if (error.request) {
+            alert("No response from the server. Please check your network connection.");
+        } else {
+            alert(`Request error: ${error.message}`);
+        }
+    }
+};
 
   return (
     <div className="userTable">
       <DataTable
-        title="Users"
+        title={"Users"}
         columns={columns}
         data={users}
         pagination

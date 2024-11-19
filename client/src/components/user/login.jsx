@@ -5,7 +5,6 @@ import "../../App.css";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { authenticate, getUser } from '../../util/helper';
-// Removed unused imports
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -21,33 +20,42 @@ const Login = () => {
                 headers: {
                     'Content-Type': 'application/json'
                 }
-            }
-            const { data } = await axios.post('http://localhost:3000/api/login', { email, password }, config)
-            console.log(data)
+            };
+            const { data } = await axios.post('http://localhost:3000/api/login', { email, password }, config);
+            console.log(data);
+            
             authenticate(data, () => {
-                // Redirect based on user role
-                if (data.role === '0') {
-                    navigate('/dashboard'); // Redirect to dashboard for admin
+                if (data.user.role === 0) { // Check for admin role (0)
+                    console.log("Redirecting to dashboard...");
+                    navigate('/dashboard');
+                } else if (data.user.role === 1) { // Check for user role (1)
+                    console.log("Redirecting to home...");
+                    navigate('/');
                 } else {
-                    navigate(redirect || '/'); // Redirect to specified page or home
+                    console.log("No valid role found for user");
+                    navigate('/'); // Default redirect in case of unexpected role value
                 }
             });
             
         } catch (error) {
-            toast.error("invalid user or password", {
-                position: "bottom-right"
-            })
+            if (error.response && error.response.status === 401) {
+                toast.error("Invalid email or password", { position: "bottom-right" });
+            } else {
+                console.error("Error during login:", error);
+                toast.error("Server error. Please try again later.", { position: "bottom-right" });
+            }
         }
-    }
+    };
+    
     const submitHandler = (e) => {
         e.preventDefault();
         handleLogin(email, password)
     }
-    useEffect(() => {
-        if (getUser() && redirect === 'shipping' ) {
-             navigate(`/${redirect}`)
-        }
-    }, [redirect, navigate])
+    // useEffect(() => {
+    //     if (getUser() && redirect === 'shipping' ) {
+    //          navigate(`/${redirect}`)
+    //     }
+    // }, [redirect, navigate])
 
     return (
         <div className='form-container'>

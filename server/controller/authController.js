@@ -43,35 +43,27 @@ export const registerUser = async (req, res) => {
     }
 };
 
-export const loginUser = async (req, res, next) => {
-    const { email, password } = req.body;
-
-    console.log('Login attempt with:', { email, password });
-    // Checks if email and password are entered by user
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Please enter email & password' });
-    }
-
+export const loginUser = async (req, res) => {
     try {
+        const { email, password } = req.body;
+
         const user = await User.findOne({ email }).select('+password');
         if (!user) {
             return res.status(401).json({ message: 'Invalid Email or Password' });
         }
 
-        // Checks if password is correct or not
-        const isPasswordMatched = await User.comparePassword(password);
+        const isPasswordMatched = await user.comparePassword(password);
         if (!isPasswordMatched) {
             return res.status(401).json({ message: 'Invalid Email or Password' });
         }
 
-        // Send the token back in the response
         sendToken(user, 200, res);
     } catch (error) {
-        console.error('Login error:', error); // Log the error for debugging
-        return res.status(500).json({ message: 'Server error' });
+        console.error("Login Error:", error); // Logs the error in the server
+        res.status(500).json({ message: 'Internal Server Error' });
     }
-    /*sendToken(User, 200, res)*/
 };
+
 
 export const getUserProfile = async (req, res) => {
     const user = await User.findById(req.user.id);
@@ -81,7 +73,7 @@ export const getUserProfile = async (req, res) => {
         user,
         role: user.role,
     })
-}
+};
 
 // export const storage = multer.diskStorage({
 //     destination: (req, file, cb) => {
@@ -170,7 +162,7 @@ export const forgotPassword = async (req, res) => {
     try {
         await sendEmail({
             email: user.email,
-            subject: 'ShopIT Password Recovery',
+            subject: 'ShoeSpot Password Recovery',
             message
         })
 

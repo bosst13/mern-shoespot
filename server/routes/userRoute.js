@@ -14,9 +14,9 @@ route.post('/login', loginUser);
 //admin routes
 route.get('/users', allUsers);
 route.get('/user/:id', getUserDetails);
-//route.put('/update/user/:id', isAuthenticatedUser, authorizeRoles('admin'), updateUser);
+route.put('/update/user/:id', isAuthenticatedUser, authorizeRoles('admin'), updateUser);
 // route.delete('/delete/user/:id', deleteUser);
 // route.patch('/toggle/userStatus/:id', toggleUserStatus);
-route.route('/admin/user/:id').get(isAuthenticatedUser, getUserDetails).put(isAuthenticatedUser, updateUser);
+// route.route('/admin/user/:id').get(isAuthenticatedUser, getUserDetails).put(isAuthenticatedUser, updateUser);
 
 export default route;

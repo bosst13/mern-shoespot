@@ -2,11 +2,12 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const authenticate = (data, next) => {
-    if (window !== 'undefined') {
+    if (typeof window !== 'undefined') {
         // console.log('authenticate', response)
-        sessionStorage.setItem('token', JSON.stringify(data.token));
-        sessionStorage.setItem('user', JSON.stringify(data.user));
-        sessionStorage.setItem('role', JSON.stringify(data.role));
+        localStorage.setItem('token', JSON.stringify(data.token));
+        localStorage.setItem('user', JSON.stringify(data.user));
+        // localStorage.setItem('role', JSON.stringify(data.role));
+        next();
         
     }
     next();

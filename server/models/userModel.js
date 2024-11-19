@@ -13,13 +13,13 @@ const userSchema = new mongoose.Schema({
       required: [true, 'Please enter your name'], 
       // maxlength: [10, 'Your name cannot exceed 10 characters']
     },
-    email: { 
+    email: {
       type: String, 
       required: [true, 'Please enter your email'], 
       validate: [validator.isEmail, 'Please enter valid email address'] 
     },
     password: { 
-      type: String, 
+      type: String,
       required: [true, 'Please enter your password'],
       minlength: [4, 'Your password must be longer than 4 characters'],
       select: false // hide password from the response
@@ -36,8 +36,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
       type: Number,
-      enum: [0, 1],
-      default: 1,
+      enum: [0, 1]
     },
     status: {
       type: Boolean,

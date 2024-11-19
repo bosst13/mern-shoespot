@@ -6,6 +6,7 @@ import route from "./routes/userRoute.js";
 import cors from "cors";
 import cloudinary from "cloudinary";
 import userRoutes from './routes/userRoute.js'
+import supplierRoutes from './routes/supplierRoute.js'
 
 const app = express();
 app.use(bodyParser.json());
@@ -39,3 +40,5 @@ mongoose
 
 app.use('/api', route);
 app.use('/api/users', userRoutes);
+app.use('/api/suppliers', supplierRoutes);
+
