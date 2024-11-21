@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import registerImage from "../../assets/register.png";
-import { Box, Card, Typography, TextField, Button, Alert, CircularProgress, InputAdornment } from '@mui/material';
+import { Box, Card, Typography, TextField, Button, Alert, InputAdornment, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm, Controller } from 'react-hook-form';
+import { auth, googleProvider } from "../../firebaseConfig"; // Import from your config
+import { signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
 import { useAuth } from "../../context/AuthContext";
 import '../../../src/Auth.css';
 
@@ -15,6 +17,8 @@ const Login = () => {
     const navigate = useNavigate();
     const [progress, setProgress] = useState(0);
     const [alert, setAlert] = useState({ type: '', message: '' });
+    const [isResetDialogOpen, setResetDialogOpen] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
 
     // Yup validation schema
     const LoginSchema = Yup.object().shape({
@@ -50,12 +54,22 @@ const Login = () => {
 
     const handleGoogleLogin = async () => {
         try {
-            await loginWithGoogle();
-            setAlert({ type: 'success', message: 'Google login successful!' });
+            await signInWithPopup(auth, googleProvider);
+            setAlert({ type: "success", message: "Google login successful!" });
             navigate("/"); // Redirect to dashboard after successful login
         } catch (error) {
-            setAlert({ type: 'error', message: 'Google login failed. Please try again.' });
+            setAlert({ type: "error", message: "Google login failed. Please try again." });
             console.error("Google login failed", error);
+        }
+    };
+
+    const handleForgotPassword = async () => {
+        try {
+            await sendPasswordResetEmail(auth, resetEmail);
+            setAlert({ type: "success", message: "Password reset email sent!" });
+            setResetDialogOpen(false);
+        } catch (error) {
+            setAlert({ type: "error", message: `Failed to send reset email: ${error.message}` });
         }
     };
 
@@ -139,7 +153,6 @@ const Login = () => {
                                 Sign In with Google
                             </Button>
                         </div>
-
                         <div>
                             <Link to="/register" className="link">
                                 <Button variant="contained" size="large" className="btn">
@@ -147,7 +160,33 @@ const Login = () => {
                                 </Button>
                             </Link> 
                         </div>
+                        <Typography sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "blue" }}
+                            onClick={() => setResetDialogOpen(true)}
+                        >
+                            Forgot your password?
+                        </Typography>
                     </form>
+                        <Dialog open={isResetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogContent>
+                        <TextField
+                            label="Enter your email"
+                            type="email"
+                            fullWidth
+                            margin="dense"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                        />
+                        </DialogContent>
+                        <DialogActions>
+                        <Button onClick={() => setResetDialogOpen(false)} color="secondary">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleForgotPassword} color="primary">
+                            Send Reset Link
+                        </Button>
+                    </DialogActions>
+                </Dialog>
                 </Box>
             </Box>
         </Card>

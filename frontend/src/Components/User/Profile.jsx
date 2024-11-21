@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext'; // Correct import path
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'; // Correct import path
-import { CircularProgress, Typography, Button, Card, CardContent, IconButton, Snackbar, Alert, Box } from '@mui/material'; 
+import { CircularProgress, Typography, Button, Card, CardContent, Snackbar, Alert, Box } from '@mui/material'; 
 import UpdateProfileForm from './UpdateProfileForm'; // Import the UpdateProfileForm component
 import { UploadFile } from '@mui/icons-material';
 import EditIcon from '@mui/icons-material/Edit'; // Import EditIcon
