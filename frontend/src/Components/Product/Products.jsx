@@ -7,7 +7,7 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,18 +56,18 @@ const Products = () => {
     setSortOrder(event.target.value);
   };
 
-  const handleCategoryChange = (event) => {
+  const handleBrandChange = (event) => {
     const { value, checked } = event.target;
     if (checked) {
-      setSelectedCategories((prev) => [...prev, value]);
+      setSelectedBrands((prev) => [...prev, value]);
     } else {
-      setSelectedCategories((prev) => prev.filter((category) => category !== value));
+      setSelectedBrands((prev) => prev.filter((category) => category !== value));
     }
   };
 
   const filteredProducts = products.filter((product) => {
-    if (selectedCategories.length === 0) return true;
-    return selectedCategories.includes(product.category);
+    if (selectedBrands.length === 0) return true;
+    return selectedBrands.includes(product.brand);
   });
 
   if (loading) {
@@ -98,15 +98,15 @@ const Products = () => {
 
           <h5>Brand</h5>
           <div>
-            <input type="checkbox" id="Adidas" name="category" value="Adidas" onChange={handleCategoryChange} />
+            <input type="checkbox" id="Adidas" name="brand" value="Adidas" onChange={handleBrandChange} />
             <label htmlFor="Adidas">Adidas</label>
           </div>
           <div>
-            <input type="checkbox" id="Nike" name="category" value="Nike" onChange={handleCategoryChange} />
+            <input type="checkbox" id="Nike" name="brand" value="Nike" onChange={handleBrandChange} />
             <label htmlFor="Nike">Nike</label>
           </div>
           <div>
-            <input type="checkbox" id="Converse" name="category" value="Converse" onChange={handleCategoryChange} />
+            <input type="checkbox" id="Converse" name="brand" value="Converse" onChange={handleBrandChange} />
             <label htmlFor="sandwich">Converse</label>
           </div>
 

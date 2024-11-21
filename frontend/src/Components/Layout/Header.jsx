@@ -1,8 +1,12 @@
 import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import logo from '/images/shoespotlogo.png';
+import { useAuth } from '../../context/AuthContext'; // Correct import path
+import AccountMenu from '../../Components/User/AccountMenu'; 
 
 const Header = () => {
+  const { user } = useAuth();
+
   return (
     <Navbar variant="dark" expand="lg" className='navbar'>
       <Container>
@@ -21,7 +25,13 @@ const Header = () => {
             <Nav.Link href="/products">Menu</Nav.Link>
             <Nav.Link href="/">Let's Connect</Nav.Link>
             <Nav.Link href="/">About Us</Nav.Link>
-            <Nav.Link href="/login">Login</Nav.Link>
+          </Nav>
+          <Nav className="ms-auto">
+            {user ? (
+              <AccountMenu /> // Display AccountMenu if user is logged in
+            ) : (
+              <Nav.Link href="/login">Login</Nav.Link>
+            )}
           </Nav>
         </Navbar.Collapse>
       </Container>

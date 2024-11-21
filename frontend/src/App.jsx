@@ -7,8 +7,12 @@ import Products from './Components/Product/Products';
 import ProductDetail from './Components/Product/ProductDetails';
 import Login from './Components/User/Login';
 import Register from './Components/User/Register';
+import Profile from './Components/User/Profile';
+import UpdateEmail from './Components/User/UpdateEmail';
+import ChangePassword from './Components/User/ChangePassword';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
+import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -25,8 +29,12 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+          <Route path="/update-email" element={<UpdateEmail />} />
+          <Route path="/change-password" element={<ChangePassword />} />
           </Routes>
           <Footer /> {/* Render Footer outside of Routes */}
+          <ToastContainer />
         </Router>
       </AuthProvider>
     </div>
