@@ -140,26 +140,26 @@ button:hover {
 
 .footer .social-icons a {
   color: #fff;
-  margin: 0 10px;
+  margin: 8px 10px;
   font-size: 24px;
   transition: color 0.3s ease;
 }
 
 .footer .social-icons a:hover {
-  color: gold;
+  color: rgb(74, 192, 255);
 }
 
 .footer .contact-info, .footer .address {
-  margin: 20px 0;
+  margin: 10px 0;
   font-size: 14px;
 }
 
 .footer .contact-info p, .footer .address p {
-  margin: 5px 0;
+  margin: 2px 0;
 }
 
 .footer p.copyright {
-  margin-top: 20px;
+  margin-top: 2px;
   font-size: 14px;
   color: #bbb;
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext'; // Correct import path
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'; // Correct import path
 import { CircularProgress, Typography, Button, Card, CardContent, Snackbar, Alert, Box } from '@mui/material'; 
 import UpdateProfileForm from './UpdateProfileForm'; // Import the UpdateProfileForm component
@@ -48,10 +48,16 @@ const Profile = () => {
     handleUpdate({ file });
   };
 
-  const handleUpdateSuccess = (updatedData) => {
-    handleUpdate(updatedData);
-    setSnackbarOpen(true); // Show Snackbar on success
-  };
+  const handleUpdateSuccess = async (updatedData) => {
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, updatedData); // Update in Firebase
+      setUserData((prev) => ({ ...prev, ...updatedData })); // Update local state
+      setSnackbarOpen(true); // Show success message
+    } catch (error) {
+      console.error('Error updating user data:', error);
+    }
+  };  
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
@@ -78,7 +84,7 @@ const Profile = () => {
         </Box>
         <CardContent className="profile-info" sx={{ textAlign: 'center' }}>
           <Typography gutterBottom variant="h5" component="div" sx={{ mb: 2 }}>
-            {userData.username}
+            {userData.name}
           </Typography>
           <Typography variant="body2" className="profile-info-text" sx={{ mb: 2 }}>
             Email: {userData.email}

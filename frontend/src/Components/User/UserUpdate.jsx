@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import useUpdateUser from '../hooks/UseUpdateUser';
+// import useUpdateUser from '../hooks/UseUpdateUser';
 import './UserUpdate.css'; // Assuming a CSS file for styling
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
@@ -10,7 +10,7 @@ const UserUpdate = () => {
     const navigate = useNavigate();
     const { updateUser, error } = useUpdateUser();
     const [formData, setFormData] = useState({
-        username: userData?.username || '',
+        name: userData?.name || '',
         email: userData?.email || '',
         image: null,
     });
@@ -55,12 +55,12 @@ const UserUpdate = () => {
                     <div className="avatar-placeholder">Avatar</div>
                 )}
                 <div className="form-group">
-                    <label htmlFor="username">Username</label>
+                    <label htmlFor="name">Name</label>
                     <input
                         type="text"
-                        name="username"
-                        id="username"
-                        value={formData.username}
+                        name="name"
+                        id="name"
+                        value={formData.name}
                         onChange={handleInputChange}
                         required
                     />

@@ -245,7 +245,7 @@ exports.login = async (req, res) => {
     res.status(200).json({
       message: 'User logged in successfully',
       user: {
-        username: user.username,
+        name: user.name,
         email: user.email,
         status: user.status,  // Assuming status is a field in your user document
         avatarURL: user.avatarURL,  // Assuming avatarURL is a field in your user document

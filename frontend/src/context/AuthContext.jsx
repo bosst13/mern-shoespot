@@ -1,7 +1,13 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { auth, googleProvider, db } from '../firebaseConfig';
-import { onAuthStateChanged, createUserWithEmailAndPassword, sendEmailVerification, updateEmail, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { onAuthStateChanged, 
+    createUserWithEmailAndPassword, 
+    sendEmailVerification, 
+    updateEmail, 
+    sendPasswordResetEmail, 
+    signInWithEmailAndPassword, 
+    signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
 export const AuthContext = createContext();
@@ -67,6 +73,17 @@ export const AuthProvider = ({ children }) => {
             throw error;
         }
     };
+
+    const handleUpdate = async (updatedData) => {
+        try {
+          // Update logic, e.g., saving data to Firebase
+          console.log('Updating user:', updatedData);
+          // Mock updating user object
+          setUser((prevUser) => ({ ...prevUser, ...updatedData }));
+        } catch (error) {
+          console.error('Error updating user:', error);
+        }
+      };
 
     const registerWithEmail = async (email, password, name, avatarFile = null) => {
         try {
@@ -178,6 +195,7 @@ export const AuthProvider = ({ children }) => {
             value={{
                 user,
                 token,
+                handleUpdate,
                 login,
                 logout,
                 registerWithEmail,

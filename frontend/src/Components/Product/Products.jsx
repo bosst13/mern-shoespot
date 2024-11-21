@@ -3,17 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Box from '@mui/material/Box';
 import { Breadcrumbs, Link, Typography, Slider } from '@mui/material';
-import Toast from "../Layout/Toast";
-import Swal from 'sweetalert2';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false); // State to track if more products are loading
   const [sortOrder, setSortOrder] = useState('');
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [ratingFilter, setRatingFilter] = useState(null);
+  const [visibleProducts, setVisibleProducts] = useState(10); // Show first 10 products initially
+  const itemsPerPage = 10;
+  const itemsPerRowInitial = 4; // Show 4 products per row initially
+  const itemsPerRowScroll = 5; // Show 5 products per row after scrolling
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,18 +78,45 @@ const Products = () => {
     setRatingFilter(newValue);
   };
 
-
-  // const filteredProducts = products.filter((product) => {
-  //   if (selectedBrands.length === 0) return true;
-  //   return selectedBrands.includes(product.brand);
-  // });
-
   const filteredProducts = products.filter((product) => {
     const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
     const ratingMatch = ratingFilter === null || product.ratings === ratingFilter;
     return brandMatch && ratingMatch;
   });
 
+  const paginatedProducts = filteredProducts.slice(0, visibleProducts);
+
+  const handleLoadMore = () => {
+    if (loadingMore) return; // Prevent loading again if it's already loading
+    setLoadingMore(true); // Set loading state when new products are being loaded
+    setTimeout(() => {
+      setVisibleProducts((prev) => prev + itemsPerPage); // Load more products after a delay (simulating an API call)
+      setLoadingMore(false); // Reset loading state once products are loaded
+    }, 1000); // Simulate a loading delay of 1 second
+  };
+
+  // Infinite Scroll using IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loading && !loadingMore) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '100px' } // Load more products when near the bottom
+    );
+
+    const loadMoreElement = document.getElementById('load-more-trigger');
+    if (loadMoreElement) {
+      observer.observe(loadMoreElement);
+    }
+
+    return () => {
+      if (loadMoreElement) {
+        observer.unobserve(loadMoreElement);
+      }
+    };
+  }, [loading, loadingMore, visibleProducts]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -114,7 +144,7 @@ const Products = () => {
             <option value="z-a">Z-A</option>
           </select>
 
-      <h5>Brand</h5>
+          <h5>Brand</h5>
           <div>
             <input type="checkbox" id="Adidas" name="brand" value="Adidas" onChange={handleBrandChange} />
             <label htmlFor="Adidas">Adidas</label>
@@ -130,55 +160,52 @@ const Products = () => {
 
           <h5>Ratings</h5>
           <Box sx={{ width: 200 }}>
-          <Slider
-            className="custom-slider"
-            size="small"
-            min={-1} // -1 represents "All Ratings"
-            max={5}
-            step={1}
-            value={ratingFilter === null ? -1 : ratingFilter} // Map null to -1 for the slider
-            onChange={(event, newValue) => setRatingFilter(newValue === -1 ? null : newValue)} // Map -1 back to null
-            aria-label="Rating Filter"
-            valueLabelDisplay="off" // Hide the value label
-          />
-          <Typography variant="caption">
-            {ratingFilter === null
-              ? 'All Products'
-              : ratingFilter === 0
-              ? 'Rating: 0'
-              : `Rating: ${ratingFilter}`}
-          </Typography>
-        </Box>
+            <Slider
+              className="custom-slider"
+              size="small"
+              min={-1}
+              max={5}
+              step={1}
+              value={ratingFilter === null ? -1 : ratingFilter}
+              onChange={(event, newValue) => setRatingFilter(newValue === -1 ? null : newValue)}
+              aria-label="Rating Filter"
+              valueLabelDisplay="off"
+            />
+            <Typography variant="caption">
+              {ratingFilter === null ? 'All Products' : ratingFilter === 0 ? 'Rating: 0' : `Rating: ${ratingFilter}`}
+            </Typography>
+          </Box>
         </div>
 
-          <div className="products-container">
-            {filteredProducts.map((product) => (
-              <div
-                key={product._id}
-                className="product-card"
-                onClick={() => navigate(`/product/${product._id}`)}
-              >
-                <img src={product.images[0].url} alt={product.name} />
-                <div className="product-card-content">
-                  <h3>{product.name}</h3>
-                  <p className="product-price">₱{product.price}</p>
-                  <div className="product-rating">
-                    {Array.from({ length: 5 }, (_, index) =>
-                      index < product.ratings ? (
-                        <StarIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
-                      ) : (
-                        <StarBorderIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
-                      )
-                    )}
-                    <span className="product-numOfReviews">({product.numOfReviews})</span>
-                  </div>
+        <div className="products-container">
+          {paginatedProducts.map((product) => (
+            <div
+              key={product._id}
+              className="product-card"
+              onClick={() => navigate(`/product/${product._id}`)}
+            >
+              <img src={product.images[0].url} alt={product.name} />
+              <div className="product-card-content">
+                <h3>{product.name}</h3>
+                <p className="product-price">₱{product.price}</p>
+                <div className="product-rating">
+                  {Array.from({ length: 5 }, (_, index) =>
+                    index < product.ratings ? (
+                      <StarIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
+                    ) : (
+                      <StarBorderIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
+                    )
+                  )}
+                  <span className="product-numOfReviews">({product.numOfReviews})</span>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-        
+
+        <div id="load-more-trigger" style={{ height: '20px', marginTop: '20px' }}></div>
       </div>
+    </div>
   );
 };
 

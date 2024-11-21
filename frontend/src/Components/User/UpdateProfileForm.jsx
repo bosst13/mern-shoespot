@@ -8,10 +8,10 @@ import { styled } from '@mui/system';
 
 const validationSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Email is required'),
-  username: Yup.string()
+  name: Yup.string()
     .min(2, 'Too Short!')
     .max(50, 'Too Long!')
-    .required('Username is required'),
+    .required('Name is required'),
   address: Yup.string()
     .min(5, 'Too Short!')
     .max(100, 'Too Long!')
@@ -34,7 +34,7 @@ const UpdateProfileForm = ({ userData, onUpdate, onCancel }) => { // Add onCance
   const { control, handleSubmit, setValue, formState: { errors, touchedFields } } = useForm({
     defaultValues: {
       email: userData.email,
-      username: userData.username,
+      name: userData.name,
       address: userData.address || '',
       phoneNumber: userData.phoneNumber || '',
       file: null,
@@ -67,7 +67,7 @@ const UpdateProfileForm = ({ userData, onUpdate, onCancel }) => { // Add onCance
   };
 
   const onSubmit = (values) => {
-    if (!values.email || !values.username) {
+    if (!values.email || !values.name) {
       alert('Please fill in all fields');
       return;
     }
@@ -110,17 +110,17 @@ const UpdateProfileForm = ({ userData, onUpdate, onCancel }) => { // Add onCance
       </div>
       <div>
         <Controller
-          name="username"
+          name="name"
           control={control}
-          render={({ field }) => (
+          render={({ field }) => ( 
             <TextField
               {...field}
-              label="Username"
+              label="Name"
               variant="outlined"
               fullWidth
               margin="normal"
-              error={touchedFields.username && Boolean(errors.username)}
-              helperText={errors.username?.message}
+              error={touchedFields.name && Boolean(errors.name)}
+              helperText={errors.name?.message}
             />
           )}
         />

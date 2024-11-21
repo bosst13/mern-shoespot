@@ -5,13 +5,13 @@ import Avatar from '@mui/material/Avatar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Logout from '@mui/icons-material/Logout';
 import Email from '@mui/icons-material/Email';
 import Lock from '@mui/icons-material/Lock';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useAuth } from '../../context/AuthContext'; // Correct import path
 import axios from 'axios'; // You might need to install axios if you don't have it
 
@@ -36,7 +36,7 @@ export default function AccountMenu() {
             'Authorization': `Bearer ${token}`, // Get the token from localStorage
           },
         });
-        setUser(response.data.user); // Assuming user data is in the `user` field of the response
+        setUser(response.data.user); // Assuming user data is in the user field of the response
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -62,16 +62,16 @@ export default function AccountMenu() {
     navigate('/profile'); // Navigate to profile page
   };
 
-  const handleDashboard = () => {
-    navigate('/dashboard'); // Navigate to dashboard page
-  };
-
   const handleUpdateEmail = () => {
     navigate('/update-email'); // Navigate to update email page
   };
 
   const handleChangePassword = () => {
     navigate('/change-password'); // Navigate to change password page
+  };
+
+  const handleOrderHistory = () => {
+    navigate('/order-history'); // Navigate to change password page
   };
 
   return (
@@ -131,11 +131,11 @@ export default function AccountMenu() {
         <MenuItem onClick={handleProfile}>
           <Avatar /> Profile
         </MenuItem>
-        <MenuItem onClick={handleDashboard}>
+        <MenuItem onClick={handleOrderHistory}>
           <ListItemIcon>
-            <DashboardIcon fontSize="small" />
+            <ListAltIcon fontSize="small" />
           </ListItemIcon>
-          Dashboard
+          Order History
         </MenuItem>
         <MenuItem onClick={handleUpdateEmail}>
           <ListItemIcon>
