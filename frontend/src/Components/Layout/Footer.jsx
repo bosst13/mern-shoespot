@@ -4,7 +4,7 @@ import { FaFacebook, FaTwitter, FaInstagram, FaPhone, FaEnvelope, FaMapMarkerAlt
 
 const Footer = () => {
   return (
-    <footer className="footer">
+    <footer className="footer" style={{ marginTop: '0', paddingTop: '20px', paddingBottom: '20px' }}>
       <Container>
         <div className="social-icons">
           <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">

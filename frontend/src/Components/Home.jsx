@@ -1,55 +1,37 @@
 import React from 'react';
-//import { Carousel } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const Home = () => {
   return (
     <div className="landing-page">
-      <div className="shoespot-cover">
+      <div className="shoespot-cover" style={{ textAlign: 'center' }}>
         <h1>Step Into Style</h1>
         <p>Find Your Perfect Pair</p>
+        <img 
+          src="/images/shows.jpg" 
+          alt="Stylish Shoes" 
+          width="100%" 
+          style={{ marginTop: '10px', objectFit: 'cover', display: 'block', marginLeft: 'auto', marginRight: 'auto' }}
+        />
       </div>
-      <button>Order Now!</button>
+      
+      {/* New section below the image */}
+      <div className="store-info" style={{ backgroundColor: 'blue', color: 'white', padding: '20px', textAlign: 'center' }}>
+        <h2>About Our Store</h2>
+        <p>Welcome to ShoeSpot, where fashion meets comfort! Our collection of shoes is carefully curated to ensure you find the perfect pair for any occasion. Whether you're looking for something casual, elegant, or sporty, we've got you covered.</p>
+        <p>Visit us today and step into your new favorite shoes!</p>
 
-{/*       
-      <div className="menu-container">
-        <div className="menu-item">
-          <img
-            className="menu"
-            src="./images/RiceMeal.jpg"
-            alt="RiceMeal"
-          />
-          <div className="menu-details">
-            <h1>RICE MEALS MENU</h1>
-            <h3>Indulge in our mouthwatering rice meals, crafted to satisfy your cravings and warm your heart.</h3>
-            <button>Order Now!</button>
-          </div>
-        </div>
-        <div className="menu-item">
-          <img
-            className="menu"
-            src="./images/SandwichMenu.jpg"
-            alt="SandwichMenu"
-          />
-          <div className="menu-details">
-            <h1>SANDWICHES MENU</h1>
-            <h3>Experience the perfect blend of fresh ingredients and flavors that will take your taste buds on a delightful journey.</h3>
-            <button>Order Now!</button>
-          </div>
-        </div>
-        <div className="menu-item">
-          <img
-            className="menu"
-            src="./images/PastaMenu.jpg"
-            alt="PastaMenu"
-          />
-          <div className="menu-details">
-            <h1>PASTA MENU</h1>
-            <h3>Each plate is crafted with premium ingredients, bursting with flavors that will transport you to the heart of Italy. Perfectly cooked, perfectly sauced—get ready to twirl your fork into deliciousness!</h3>
-            <button>Order Now!</button>
-          </div>
-        </div>
-      </div> */}
+        {/* New image below the text */}
+        <img 
+          src="/images/logy.png" 
+          alt="Our Store" 
+          width="5%" 
+          style={{ display: 'block', marginLeft: 'auto', marginRight: 'auto', marginTop: '20px' }} 
+        />
+
+      </div>
+
+      
     </div>
   );
 };
