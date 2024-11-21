@@ -16,6 +16,7 @@ import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Dashboard from './Components/Admin/Dashboard';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
           <Route path="/update-email" element={<UpdateEmail />} />
           <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/admin/dashboard" element={<Dashboard />} />
           </Routes>
           <Footer /> {/* Render Footer outside of Routes */}
           <ToastContainer />

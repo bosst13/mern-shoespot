@@ -81,6 +81,17 @@ exports.getProducts = async (req, res, next) => {
     }
 };
 
+//FETCH BRANDS
+const fetchBrands = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/brands`);
+        // Assuming the response contains an array of brands
+        setBrands(response.data.brands);  // Set brands from response
+    } catch (error) {
+        console.error('Error fetching brands:', error);
+    }
+};
+
 //READ SPECIFIC PRODUCT
 exports.getSingleProduct = async (req, res, next) => {
 	const product = await Product.findById(req.params.id);
@@ -95,6 +106,7 @@ exports.getSingleProduct = async (req, res, next) => {
         product
     });
 };
+
 
 // UPDATE PRODUCT
 exports.updateProduct = async (req, res, next) => {

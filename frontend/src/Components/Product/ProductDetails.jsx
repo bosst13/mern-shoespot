@@ -41,7 +41,7 @@ const ProductDetails = () => {
             Home
           </Link>
           <Link color="inherit" href="/products" onClick={() => navigate('/products')}>
-            Menu
+            Shoes
           </Link>
           <Typography color="textPrimary">{product.name}</Typography>
         </Breadcrumbs>
