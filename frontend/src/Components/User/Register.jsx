@@ -60,9 +60,10 @@ const Register = () => {
 
     return (
         <Card sx={{ maxWidth: 500, mx: 'auto', mt: 5, p: 3 }}>
-            <Box className="flex-container">
-                <Typography variant="h4" align="center" gutterBottom>
-                    Create an Account
+            <Box className="form-content">
+                <Typography variant="h3" component="h1" className="title" align="center">
+                    Registration Form
+                    <img src={registerImage} className="auth-image" alt="Register" width={'55'}/>
                 </Typography>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div>
@@ -215,10 +216,7 @@ const Register = () => {
                         </div>
                     </form>
                 </Box>
-            <div className="image-content">
-                    <img src={registerImage} className="auth-image" alt="Register" />
-            </div>
-        </Card>
+            </Card>
     );
 };
 

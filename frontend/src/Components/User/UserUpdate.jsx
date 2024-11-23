@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 // import useUpdateUser from '../hooks/UseUpdateUser';
-import './UserUpdate.css'; // Assuming a CSS file for styling
+// import './UserUpdate.css'; // Assuming a CSS file for styling
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 const UserUpdate = () => {

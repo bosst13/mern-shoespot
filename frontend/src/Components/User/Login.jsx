@@ -74,10 +74,10 @@ const Login = () => {
     };
 
     return (
-        <Card sx={{ maxWidth: 500, mx: 'auto', mt: 5, p: 3 }}>
+        <Card sx={{ maxWidth: 700, mx: 'auto', mt: 8, p: 4 }}>
             <Box className="flex-container">
             <div className="image-content">
-                    <img src={registerImage} className="auth-loginimage" alt="Register" />
+                    <img src={registerImage} className="auth-loginimage" alt="Register" width={'190'}/>
                 </div>
                 <Box className="form-content">
                     <Typography variant="h3" component="h1" className="title">
@@ -138,27 +138,43 @@ const Login = () => {
                     
                         <div>
                             {loading ? (
-                                <Box sx={{ width: '100%' }}>
-                                    <LinearProgressWithLabel value={progress} />
-                                </Box>
+                            <Box sx={{ width: '100%' }}>
+                                <LinearProgressWithLabel value={progress} />
+                            </Box>
                             ) : (
-                                <Button type="primary" htmlType="submit" size="large" className="btn" disabled={isSubmitting || loading}>
-                                    Sign In
-                                </Button>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                size="large"
+                                className="btn"
+                                disabled={isSubmitting || loading}
+                            >
+                                Sign In
+                            </Button>
+                            </Box>
                             )}
                         </div>
-
                         <div>
-                            <Button type="default" size="large" className="btn" onClick={handleGoogleLogin}>
+                            <Button
+                                type="default"
+                                size="large"
+                                className="btn"
+                                onClick={handleGoogleLogin}
+                                startIcon={
+                                    <img src="gle.png"
+                                        alt="Google logo"
+                                        style={{ width: 30, height: 30 }}
+                                    />
+                                }
+                            >
                                 Sign In with Google
                             </Button>
                         </div>
                         <div>
-                            <Link to="/register" className="link">
-                                <Button variant="contained" size="large" className="btn">
-                                    Create Account
-                                </Button>
-                            </Link> 
+                            <Typography variant="body2" align="center" mt={2}>
+                                Don't have an account? <Link to="/register">Register</Link>
+                            </Typography>
                         </div>
                         <Typography sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "blue" }}
                             onClick={() => setResetDialogOpen(true)}

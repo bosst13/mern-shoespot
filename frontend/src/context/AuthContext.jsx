@@ -1,10 +1,10 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { auth, googleProvider, db } from '../firebaseConfig';
-import { onAuthStateChanged, 
+import { onAuthStateChanged,
+    signInWithPopup, 
     createUserWithEmailAndPassword, 
     sendEmailVerification, 
-    updateEmail, 
     sendPasswordResetEmail, 
     signInWithEmailAndPassword, 
     signOut } from 'firebase/auth';
@@ -73,17 +73,101 @@ export const AuthProvider = ({ children }) => {
             throw error;
         }
     };
+    
+    const loginWithGoogle = async () => {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+    
+            if (!user.emailVerified) {
+                await signOut(auth);
+                alert('Please verify your email before logging in.');
+                return;
+            }
+    
+            const token = await user.getIdToken();
+    
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (!userDoc.exists()) {
+                const response = await fetch(user.photoURL);
+                const blob = await response.blob();
+    
+                const formData = new FormData();
+                formData.append('image', blob, 'avatar.jpg');
+    
+                const uploadResponse = await fetch('http://localhost:5000/api/auth/upload-avatar', {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                if (!uploadResponse.ok) {
+                    if (uploadResponse.status === 500) {
+                        throw new Error('Internal Server Error');
+                    } else {
+                        const errorData = await uploadResponse.json();
+                        throw new Error(errorData.message || 'Failed to upload avatar');
+                    }
+                }
+    
+                const data = await uploadResponse.json();
+                const avatarURL = data.secure_url;
+    
+                await setDoc(doc(db, 'users', user.uid), {
+                    email: user.email,
+                    name: user.displayName,
+                    avatarURL: avatarURL,
+                    createdAt: new Date(),
+                    status: user.emailVerified ? 'verified' : 'unverified'
+                });
+            }
+    
+            setToken(token);
+            setUser(user);
+            localStorage.setItem('token', token); // Store token in local storage
+        } catch (error) {
+            console.error("Error logging in with Google: ", error);
+            alert(error.message);
+        }
+    };
 
     const handleUpdate = async (updatedData) => {
         try {
-          // Update logic, e.g., saving data to Firebase
-          console.log('Updating user:', updatedData);
-          // Mock updating user object
-          setUser((prevUser) => ({ ...prevUser, ...updatedData }));
+            let avatarURL = user.photoURL;
+
+            if (updatedData.file) {
+                const formData = new FormData();
+                formData.append('image', updatedData.file);
+
+                const response = await fetch('http://localhost:5000/api/auth/upload-avatar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    if (response.status === 500) {
+                        throw new Error('Internal Server Error');
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to upload avatar');
+                    }
+                }
+
+                const data = await response.json();
+                avatarURL = data.secure_url;
+            }
+
+            const userRef = doc(db, 'users', user.uid);
+            const { file, ...dataWithoutFile } = updatedData; // Exclude the file field
+            await setDoc(userRef, {
+                ...dataWithoutFile,
+                avatarURL,
+            }, { merge: true });
+
+            setUser((prevUser) => ({ ...prevUser, ...dataWithoutFile, photoURL: avatarURL }));
         } catch (error) {
-          console.error('Error updating user:', error);
+            alert('Failed to update profile: ' + error.message);
         }
-      };
+    };
 
     const registerWithEmail = async (email, password, name, avatarFile = null) => {
         try {
@@ -178,6 +262,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateEmailAddress = async (newEmail) => {
+        try {
+            await sendEmailVerification(auth.currentUser, { url: window.location.href });
+
+            const userRef = doc(db, 'users', user.uid);
+            await setDoc(userRef, { email: newEmail }, { merge: true });
+
+            return 'A verification email has been sent to your new email address. Please verify it before logging in again.';
+        } catch (error) {
+            return 'Failed to update email: ' + error.message;
+        }
+    };
+
     const logout = async () => {
         try {
             await signOut(auth);
@@ -197,7 +294,9 @@ export const AuthProvider = ({ children }) => {
                 token,
                 handleUpdate,
                 login,
+                loginWithGoogle,
                 logout,
+                updateEmailAddress,
                 registerWithEmail,
             }}
         >

@@ -2,16 +2,21 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const authenticate = (data, next) => {
-    if (typeof window !== 'undefined') {
-        // console.log('authenticate', response)
-        localStorage.setItem('token', JSON.stringify(data.token));
-        localStorage.setItem('user', JSON.stringify(data.user));
-        // localStorage.setItem('role', JSON.stringify(data.role));
-        next();
-        
+    if (window !== 'undefined') {
+        // Ensure user data (including userImage) is stored correctly
+        const userWithImage = {
+            ...data.user,
+            userImage: data.user.userImage ? data.user.userImage : '/defaults/profile-pic.webp', // Default image if no userImage
+        };
+
+        // Save both token and user data to sessionStorage
+        sessionStorage.setItem('token', JSON.stringify(data.token));
+        sessionStorage.setItem('user', JSON.stringify(userWithImage));  // Make sure we are saving the complete user object
+        console.log('User stored in sessionStorage:', userWithImage);  // Debugging: log the stored user
     }
     next();
 };
+
 
 export const getToken = () => {
     if (window !== 'undefined') {

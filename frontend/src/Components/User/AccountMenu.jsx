@@ -12,6 +12,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Logout from '@mui/icons-material/Logout';
 import Email from '@mui/icons-material/Email';
 import Lock from '@mui/icons-material/Lock';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useAuth } from '../../context/AuthContext'; // Correct import path
 import axios from 'axios'; // You might need to install axios if you don't have it
 
@@ -26,17 +27,12 @@ export default function AccountMenu() {
   React.useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No token found in localStorage');
-        }
-    
         const response = await axios.get('http://localhost:5000/api/auth/me', {
           headers: {
-            'Authorization': `Bearer ${token}`, // Get the token from localStorage
+            'Authorization': `Bearer ${localStorage.getItem('token')}`, // Get the token from localStorage
           },
         });
-        setUser(response.data.user); // Assuming user data is in the user field of the response
+        setUser(response.data.user); // Assuming user data is in the `user` field of the response
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -72,6 +68,10 @@ export default function AccountMenu() {
 
   const handleOrderHistory = () => {
     navigate('/order-history'); // Navigate to change password page
+  };
+
+  const handleDashboard = () => {
+    navigate('/dashboard'); // Navigate to dashboard page
   };
 
   return (
@@ -148,6 +148,12 @@ export default function AccountMenu() {
             <Lock fontSize="small" />
           </ListItemIcon>
           Change Password
+        </MenuItem>
+        <MenuItem onClick={handleDashboard}>
+          <ListItemIcon>
+            <DashboardIcon fontSize="small" />
+          </ListItemIcon>
+          Dashboard
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>

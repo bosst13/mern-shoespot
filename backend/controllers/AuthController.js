@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 
 exports.signup = async (req, res) => {
   const { name, email, password, firebaseUid, role, status, userImage, cloudinary_id } = req.body;
-    const imageFile = req.file;
+    // const imageFile = req.file;
 
     try {
       // Hash the password before saving to MongoDB
@@ -230,7 +230,7 @@ exports.login = async (req, res) => {
   try {
     // Authenticate the user using Firebase Authentication (get user details from Firebase)
     const userRecord = await admin.auth().getUserByEmail(email);
-
+    
     // Fetch the user's information from Firestore using the Firebase UID
     const userDoc = await db.collection('users').doc(userRecord.uid).get();
 
@@ -248,11 +248,75 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         status: user.status,  // Assuming status is a field in your user document
-        avatarURL: user.avatarURL,  // Assuming avatarURL is a field in your user document
+        avatarURL: user.avatarURL,
+        // role: user.role,  
       },
     });
   } catch (error) {
     console.error(error);
     res.status(400).json({ message: 'Login failed' });
+  }
+};
+
+exports.addToOrderList = async (req, res) => {
+  try {
+    const { userId, product_id, quantity } = req.body;
+
+    if (!userId || !product_id || !quantity) {
+      return res.status(400).json({ message: 'User ID, product ID, and quantity are required.' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Check if the product is already in the order list
+    const existingItem = user.orderlist.find(
+      item => item.product_id.toString() === product_id.toString()
+    );
+
+    if (existingItem) {
+      // Update quantity if item exists
+      existingItem.quantity += quantity;
+    } else {
+      // Add new item to the order list
+      user.orderlist.push({ product_id, quantity });
+    }
+
+    await user.save();
+    res.status(200).json({ message: 'Item added to order list successfully.', orderlist: user.orderlist });
+  } catch (error) {
+    console.error('Error adding to order list:', error);
+    res.status(500).json({ message: 'Failed to add item to order list.' });
+  }
+};
+
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error('Error fetching users:', error.message);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Fetch from MongoDB
+    const mongoUsers = await User.find();
+    
+    // Fetch from Firestore
+    const firestoreSnapshot = await db.collection('users').get();
+    const firestoreUsers = firestoreSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Combine the data
+    const allUsers = [...mongoUsers.map(user => user.toObject()), ...firestoreUsers];
+    
+    res.status(200).json({ message: 'Users fetched successfully.', users: allUsers });
+  } catch (error) {
+    console.error('Error fetching users:', error.message);
+    res.status(500).json({ message: 'Failed to fetch users.', error: error.message });
   }
 };
