@@ -8,7 +8,7 @@ import { onAuthStateChanged,
     sendPasswordResetEmail, 
     signInWithEmailAndPassword, 
     signOut } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export const AuthContext = createContext();
 
@@ -19,17 +19,35 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                const token = await currentUser.getIdToken();
-                setToken(token);
-                setUser(currentUser);
+                console.log('AuthContext: Current User UID:', currentUser.uid);
+    
+                try {
+                    const token = await currentUser.getIdToken();
+                    setToken(token);
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+                    const response = await axios.get(`http://localhost:5000/api/auth/me`);
+                    const userData = response.data;
+    
+                    // Log userData for debugging
+                    console.log('AuthContext: Fetched User Data from MongoDB:', userData);
+    
+                    // Update user context with role
+                    setUser({ ...userData }); // This ensures role and other user data is properly set
+                } catch (error) {
+                    console.error('AuthContext: Error fetching user data:', error);
+                }
             } else {
+                console.log('AuthContext: No user is logged in');
                 setToken(null);
                 setUser(null);
+                delete axios.defaults.headers.common['Authorization'];
             }
         });
-
+    
         return () => unsubscribe();
     }, []);
+    
 
     const reloadUser = async () => {
         if (!auth.currentUser) {
@@ -44,35 +62,38 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+            const currentUser = userCredential.user;
     
-            // Reload user to ensure the email verification status is up-to-date
-            await reloadUser().catch((error) => {
-                console.error("Error reloading user:", error);
-                throw new Error("Failed to reload user. Please log in again.");
+            const token = await currentUser.getIdToken();
+            const response = await axios.get(`http://localhost:5000/api/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
     
-            // Check if the user's email is verified
-            if (!user.emailVerified) {
-                await signOut(auth);
-                throw new Error('Please verify your email before logging in.');
+            // Access the nested user object
+            const userData = response.data.user;
+            console.log('Full user data from MongoDB:', userData);
+    
+            // Extract and normalize the role
+            const role = userData.role?.trim().toLowerCase();
+            console.log('Resolved role:', role);
+    
+            if (!['user', 'admin'].includes(role)) {
+                console.error('Invalid role:', role);
+                throw new Error('Invalid role. Access denied.');
             }
     
-            // Get the Firebase ID token
-            const token = await user.getIdToken();
+            // Update context and local storage
             setToken(token);
-            setUser(user);
-    
-            // Save the token in localStorage
+            setUser({ ...userData, role });
             localStorage.setItem('token', token);
     
-            // Set the token in the default Authorization header for axios
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            return role; // Return the role for navigation
         } catch (error) {
-            console.error("Error logging in: ", error);
+            console.error('Error logging in:', error);
             throw error;
         }
     };
+    
     
     const loginWithGoogle = async () => {
         try {
@@ -114,7 +135,7 @@ export const AuthProvider = ({ children }) => {
     
                 await setDoc(doc(db, 'users', user.uid), {
                     email: user.email,
-                    name: user.displayName,
+                    username: user.displayName,
                     avatarURL: avatarURL,
                     createdAt: new Date(),
                     status: user.emailVerified ? 'verified' : 'unverified'
@@ -232,6 +253,7 @@ export const AuthProvider = ({ children }) => {
                 name: userDetails.name,
                 email: userDetails.email,
                 avatarURL: userDetails.userImage,
+                role: userDetails.role,
                 createdAt: new Date(),
                 status: 'unverified', // Firestore status is initially "unverified"
             });

@@ -44,9 +44,20 @@ const Login = () => {
     const onSubmit = async (values) => {
         console.log("Received values of form: ", values);
         try {
-            await login(values.email, values.password);
+            const role = await login(values.email, values.password); // Await login and get role
+            console.log('Role returned from login:', role); // Debug role
+    
             setAlert({ type: 'success', message: 'Login successful!' });
-            navigate("/"); // Redirect to dashboard after successful login
+    
+            if (role === 'admin') {
+                console.log('Redirecting to admin dashboard...');
+                navigate('/admin/dashboard');
+            } else if (role === 'user') {
+                console.log('Redirecting to user homepage...');
+                navigate('/');
+            } else {
+                console.error('Unexpected role:', role);
+            }
         } catch (err) {
             setAlert({ type: 'error', message: err.message });
         }
@@ -144,8 +155,8 @@ const Login = () => {
                             ) : (
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
                             <Button
-                                type="primary"
-                                htmlType="submit"
+                                color="primary"
+                                type="submit"
                                 size="large"
                                 className="btn"
                                 disabled={isSubmitting || loading}

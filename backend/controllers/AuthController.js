@@ -126,7 +126,6 @@ exports.uploadAvatar = [
 
 exports.getCurrentUser = async (req, res) => {
   try {
-    // Get token from authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -134,40 +133,40 @@ exports.getCurrentUser = async (req, res) => {
     }
 
     const token = authHeader.split(' ')[1];
-    console.log("Received token:", token);  // Log received token
-
-    // Verify the Firebase custom token
     const decodedToken = await admin.auth().verifyIdToken(token);
-    console.log("Decoded token:", decodedToken);  // Log decoded token
+    const firebaseUid = decodedToken.uid;
 
-    const userId = decodedToken.uid;  // Get user ID from token
-
-    // Fetch the user from Firestore by UID
-    const userDoc = await db.collection('users').doc(userId).get();
-
-    // Log the document retrieval result
-    console.log("Firestore document data:", userDoc.exists ? userDoc.data() : 'No such document found');
+    // Fetch user details from Firestore (Firebase)
+    const userDoc = await db.collection('users').doc(firebaseUid).get();
 
     if (!userDoc.exists) {
-      return res.status(404).json({ message: 'User not found in Firestore' });
+      return res.status(404).json({ message: "User not found in Firestore" });
     }
 
-    // Get the user data from the document
-    const user = userDoc.data();
+    // Fetch user details from MongoDB using Firebase UID
+    const mongoUser = await User.findOne({ firebaseUid });
 
-    // Respond with user details
+    if (!mongoUser) {
+      return res.status(404).json({ message: "User not found in MongoDB" });
+    }
+
+    // Merge Firestore and MongoDB data
+    const user = {
+      _id: mongoUser._id, // Include MongoDB ID
+      name: mongoUser.name || userDoc.data().name,
+      email: mongoUser.email || userDoc.data().email,
+      status: mongoUser.status || userDoc.data().status,
+      avatarURL: mongoUser.userImage || userDoc.data().avatarURL,
+      role: mongoUser.role || "user",
+    };
+
     res.status(200).json({
-      message: 'User retrieved successfully',
-      user: {
-        name: user.name,
-        email: user.email,
-        status: user.status,  // Assuming status is a field in your user document
-        avatarURL: user.avatarURL,  // Assuming avatarURL is a field in your user document
-      },
+      message: "User retrieved successfully",
+      user,
     });
   } catch (error) {
-    console.error('Error fetching user:', error.message);
-    res.status(500).json({ message: 'Failed to fetch user details' });
+    console.error("Error fetching user:", error.message);
+    res.status(500).json({ message: "Failed to fetch user details" });
   }
 };
 

@@ -204,7 +204,7 @@ const Register = () => {
                                     <LinearProgress />
                                 </Box>
                             ) : (
-                                <Button type="primary" htmlType="submit" size="large" className="btn" disabled={isSubmitting || loading}>
+                                <Button type="submit" color="primary" size="large" className="btn" disabled={isSubmitting || loading}>
                                     Create Account
                                 </Button>
                             )}

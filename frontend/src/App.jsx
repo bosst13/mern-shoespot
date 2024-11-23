@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Home from './Components/Home';
 import Header from './Components/Layout/Header';
 import Footer from './Components/Layout/Footer';
@@ -14,6 +14,8 @@ import UpdateEmail from './Components/User/UpdateEmail';
 import ChangePassword from './Components/User/ChangePassword';
 import { AuthProvider } from './context/AuthContext';
 import Dashboard from './Components/Admin/Dashboard';
+import Unauthorized from '../src/pages/Unauthorized';
+import { RequireAuth } from './middleware/RequireAuth';
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -22,11 +24,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useAuth } from './context/AuthContext';
 
 const AppContent = () => {
   const location = useLocation(); // Track the current route
   const [currentUser, setCurrentUser] = useState(null); // Track the logged-in user
   const [orderCount, setOrderCount] = useState(0); // Track the total order count
+  const { user } = useAuth();
 
   // Fetch the order count from the backend
   const fetchOrderCount = async () => {
@@ -93,19 +97,26 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
-        <Route
-          path="/product/:id"
-          element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />}
-        />
+        <Route path="/product/:id" element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />}/>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/order-history" element={<OrderHistory />} />
         <Route path="/update-email" element={<UpdateEmail />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/admin/dashboard" element={<Dashboard />} />
-      </Routes>
+        
+                <Route element={<RequireAuth allowedRoles={['user']} />}>
+                    <Route path="/" element={<Home />} />
+                </Route>
+                <Route element={<RequireAuth allowedRoles={['admin']} />}>
+                    <Route path="/admin/dashboard" element={<Dashboard />} />
+                </Route>
+
+    {/* Fallback route */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+</Routes>;
       {!hideHeaderFooter && <Footer />}
       <ToastContainer />
     </>
