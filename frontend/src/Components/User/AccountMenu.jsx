@@ -85,7 +85,7 @@ export default function AccountMenu() {
             aria-expanded={open ? 'true' : undefined}
           >
             <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32 }} />
-            <span>{user?.username}</span>
+            <span>{user?.name}</span>
           </IconButton>
         </Tooltip>
       </Box>
@@ -152,7 +152,7 @@ export default function AccountMenu() {
             textTransform: 'capitalize',
           }}
         >
-          {user?.username || 'Unknown User'}
+          {user?.name || 'Unknown User'}
         </Typography>
         <Typography
           variant="subtitle1"
