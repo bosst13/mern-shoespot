@@ -2,6 +2,8 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
+import {getMessaging, getToken} from "firebase/messaging";
+
 
 console.log(import.meta.env.VITE_FIREBASE_API_KEY);
 
@@ -19,6 +21,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const storage = getStorage(app);
 const db = getFirestore(app);
+const messaging = getMessaging(app);
 
 const googleProvider = new GoogleAuthProvider();
 

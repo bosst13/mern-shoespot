@@ -44,20 +44,9 @@ const Login = () => {
     const onSubmit = async (values) => {
         console.log("Received values of form: ", values);
         try {
-            const role = await login(values.email, values.password); // Await login and get role
-            console.log('Role returned from login:', role); // Debug role
-    
+            await login(values.email, values.password);
             setAlert({ type: 'success', message: 'Login successful!' });
-    
-            if (role === 'admin') {
-                console.log('Redirecting to admin dashboard...');
-                navigate('/admin/dashboard');
-            } else if (role === 'user') {
-                console.log('Redirecting to user homepage...');
-                navigate('/');
-            } else {
-                console.error('Unexpected role:', role);
-            }
+            navigate("/"); // Redirect to dashboard after successful login
         } catch (err) {
             setAlert({ type: 'error', message: err.message });
         }

@@ -26,6 +26,40 @@ import { auth } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import OrdersChart from './Components/Admin/OrdersChart';
 import StatusTable from './Components/Admin/StatusTable';  // Import the StatusTable component
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import Toast from './Components/Layout/Toast';
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+};
+
+// Initialize Firebase App
+const firebaseApp = initializeApp(firebaseConfig);
+
+// Initialize Messaging
+const messaging = getMessaging(firebaseApp);
+
+// Function to Request Notification Permission
+export const requestNotificationPermission = async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('Have permission');
+    } else {
+      console.log('Denied permission');
+    }
+  } catch (error) {
+    console.error('Error requesting notification permission or retrieving token:', error);
+  }
+};
 
 const AppContent = () => {
   const location = useLocation(); // Track the current route
@@ -54,8 +88,23 @@ const AppContent = () => {
     }
   }, [currentUser]);
 
+  useEffect(() => {
+    const initializeFCM = async () => {
+      if (currentUser) {
+        await requestNotificationPermission();
+      
+        // Listen for foreground messages
+        onMessage(messaging, (payload) => {
+          console.log('Foreground message received:', payload);
+      
+          // Display notification as a toast
+          Toast(`${payload.notification.title}: ${payload.notification.body}`, "success");
+        });
+      }
+    };
 
-
+    initializeFCM();
+  }, [currentUser]);
 
 
   // Fetch the order count from the backend
@@ -114,6 +163,33 @@ const AppContent = () => {
       document.body.classList.remove('no-background');
     }
   }, [location]);
+
+  // Register the service worker manually in the app
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('Service Worker registration failed:', error);
+        });
+    }
+
+    // Get FCM token
+    const messaging = getMessaging(firebaseApp);
+    getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY })
+      .then((currentToken) => {
+        if (currentToken) {
+          console.log('FCM Token:', currentToken);
+        } else {
+          console.log('No FCM token available');
+        }
+      })
+      .catch((error) => {
+        console.error('Error getting FCM token:', error);
+      });
+  }, []);
 
   return (
     <>

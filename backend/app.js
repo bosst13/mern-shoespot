@@ -11,6 +11,7 @@ const orderListRoutes = require('./routes/orderlist');
 // const orderRoutes = require('./routes/order');
 const orderRoutes = require('./routes/orderRoutes');
 const order = require('./routes/order');
+const { admin } = require('./utils/firebaseConfig')
 
 app.use(express.urlencoded({limit: "50mb", extended: true }));
 app.use(cors({
@@ -28,6 +29,30 @@ app.use(cors({
 
 app.use(cookieParser());
 app.use(express.json());
+
+// Firebase Cloud Messaging setup
+const messaging = admin.messaging(); // Initialize messaging instance
+
+// Example route to send a push notification
+app.post('/api/v1/send-notification', async (req, res) => {
+  const { token, title, body } = req.body; // Token sent from the client app
+  const message = {
+    notification: {
+      title: title || 'Default Title',
+      body: body || 'Default Body',
+    },
+    token: token, // FCM device token from the front-end
+  };
+
+  try {
+    const response = await messaging.send(message); // Send the notification
+    console.log('Notification sent successfully:', response);
+    res.status(200).json({ success: true, response });
+  } catch (error) {
+    console.error('Error sending notification:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 app.use('/api/v1', products);
 app.use('/api/auth', authRoute);
