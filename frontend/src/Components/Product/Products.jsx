@@ -9,13 +9,14 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false); // State to track if more products are loading
   const [sortOrder, setSortOrder] = useState('');
   const [selectedBrands, setSelectedBrands] = useState([]);
-  const [ratingFilter, setRatingFilter] = useState(0); // Slider filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [visibleProducts, setVisibleProducts] = useState(10);
+  const [ratingFilter, setRatingFilter] = useState(null);
+  const [visibleProducts, setVisibleProducts] = useState(10); // Show first 10 products initially
   const itemsPerPage = 10;
+  const itemsPerRowInitial = 4; // Show 4 products per row initially
+  const itemsPerRowScroll = 5; // Show 5 products per row after scrolling
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +34,33 @@ const Products = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    if (sortOrder) {
+      sortProducts(sortOrder);
+    }
+  }, [sortOrder, products]);
+
+  const sortProducts = (order) => {
+    let sortedProducts = [...products];
+    switch (order) {
+      case 'low-to-high':
+        sortedProducts.sort((a, b) => a.price - b.price);
+        break;
+      case 'high-to-low':
+        sortedProducts.sort((a, b) => b.price - a.price);
+        break;
+      case 'a-z':
+        sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'z-a':
+        sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      default:
+        break;
+    }
+    setProducts(sortedProducts);
+  };
+
   const handleSortChange = (event) => {
     setSortOrder(event.target.value);
   };
@@ -46,34 +74,49 @@ const Products = () => {
     }
   };
 
-  const handleRatingFilterChange = (event) => {
-    setRatingFilter(event.target.value); // Update slider value
+  const handleRatingChange = (event, newValue) => {
+    setRatingFilter(newValue);
   };
 
-  const handleSearchChange = (event) => {
-    setSearchQuery(event.target.value);
-  };
+  const filteredProducts = products.filter((product) => {
+    const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
+    const ratingMatch = ratingFilter === null || product.ratings === ratingFilter;
+    return brandMatch && ratingMatch;
+  });
 
-  const filteredProducts = products
-    .filter((product) => {
-      // Filter by brand
-      const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brand);
-      // Filter by rating
-      const ratingMatch = ratingFilter === 0 || product.ratings >= ratingFilter;
-      // Filter by search query
-      const searchMatch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return brandMatch && ratingMatch && searchMatch;
-    })
-    .slice(0, visibleProducts); // Apply pagination
+  const paginatedProducts = filteredProducts.slice(0, visibleProducts);
 
   const handleLoadMore = () => {
-    if (loadingMore) return;
-    setLoadingMore(true);
+    if (loadingMore) return; // Prevent loading again if it's already loading
+    setLoadingMore(true); // Set loading state when new products are being loaded
     setTimeout(() => {
-      setVisibleProducts((prev) => prev + itemsPerPage);
-      setLoadingMore(false);
-    }, 1000);
+      setVisibleProducts((prev) => prev + itemsPerPage); // Load more products after a delay (simulating an API call)
+      setLoadingMore(false); // Reset loading state once products are loaded
+    }, 1000); // Simulate a loading delay of 1 second
   };
+
+  // Infinite Scroll using IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loading && !loadingMore) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '100px' } // Load more products when near the bottom
+    );
+
+    const loadMoreElement = document.getElementById('load-more-trigger');
+    if (loadMoreElement) {
+      observer.observe(loadMoreElement);
+    }
+
+    return () => {
+      if (loadMoreElement) {
+        observer.unobserve(loadMoreElement);
+      }
+    };
+  }, [loading, loadingMore, visibleProducts]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -92,14 +135,6 @@ const Products = () => {
 
       <div className="products-content">
         <div className="products-sidebar">
-          <h5>Search</h5>
-          <input
-            type="text"
-            placeholder="Search by product name"
-            value={searchQuery}
-            onChange={handleSearchChange}
-          />
-
           <h5>Sort by</h5>
           <select onChange={handleSortChange}>
             <option value="">Select</option>
@@ -120,30 +155,34 @@ const Products = () => {
           </div>
           <div>
             <input type="checkbox" id="Converse" name="brand" value="Converse" onChange={handleBrandChange} />
-            <label htmlFor="Converse">Converse</label>
+            <label htmlFor="sandwich">Converse</label>
           </div>
 
           <h5>Ratings</h5>
-          <div className="ratings-slider">
-            <label htmlFor="rating-slider">Minimum Rating: {ratingFilter} stars</label>
-            <input
-              type="range"
-              id="rating-slider"
-              min="0"
-              max="5"
-              step="1"
-              value={ratingFilter}
-              onChange={handleRatingFilterChange}
+          <Box sx={{ width: 200 }}>
+            <Slider
+              className="custom-slider"
+              size="small"
+              min={-1}
+              max={5}
+              step={1}
+              value={ratingFilter === null ? -1 : ratingFilter}
+              onChange={(event, newValue) => setRatingFilter(newValue === -1 ? null : newValue)}
+              aria-label="Rating Filter"
+              valueLabelDisplay="off"
             />
-          </div>
+            <Typography variant="caption">
+              {ratingFilter === null ? 'All Products' : ratingFilter === 0 ? 'Rating: 0' : `Rating: ${ratingFilter}`}
+            </Typography>
+          </Box>
         </div>
 
         <div className="products-container">
-          {filteredProducts.map((product) => (
+          {paginatedProducts.map((product) => (
             <div
               key={product._id}
               className="product-card"
-              onClick={() => navigate(`/product/${product._id}`)}
+              onClick={() => navigate(`/product/${product._id}`)} // Fixed backticks here
             >
               <img src={product.images[0].url} alt={product.name} />
               <div className="product-card-content">

@@ -91,6 +91,16 @@ const CheckoutPage = () => {
       });
       return;
     }
+
+    const taxRate = 0.05;  // 5% tax rate
+    const shippingRate = 0.10;  // 10% shipping rate
+  
+    // Calculate taxes and shipping fee based on the totalPrice
+    const taxes = totalPrice * taxRate;
+    const shippingFee = totalPrice * shippingRate;
+  
+    // Calculate final total (subtotal + taxes + shipping)
+    const finalTotal = totalPrice + taxes + shippingFee;
   
     const payload = {
       userId,
@@ -126,6 +136,32 @@ const CheckoutPage = () => {
         data: { userId, productIds },
       });
       console.log('Delete Response:', deleteResponse.data);
+
+      const emailPayload = {
+        email: userInfo.email,
+        orderDetails: {
+          subtotal: totalPrice,
+          taxes,
+          shippingFee,
+          finalTotal,
+          products: selectedItems.map((item) => ({
+            productId: item.product.id,
+            productName: item.product.name,  // Include product name for email
+            quantity: item.quantity,
+            price: item.product.price,
+            total: item.product.price * item.quantity,  // Total for this product
+          })),
+          paymentMethod: shippingMethod.toLowerCase().replace(' ', '_'),  // Add payment method here
+        },
+      };
+  
+      try {
+        await axios.post(`${import.meta.env.VITE_API}/send-order-confirmation`, emailPayload);
+        console.log('Confirmation email sent successfully');
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Optionally, show an alert for email failure, but proceed with the order success
+      }
   
       Swal.fire({
         icon: 'success',

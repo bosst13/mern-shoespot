@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel, Alert, Snackbar, Box, LinearProgress, Typography } from '@mui/material';
 import axios from 'axios';
-import swal from 'sweetalert';
+import swal from 'sweetalert2';
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx'; // Adjust the import path
 
 const ProductTable = () => {
