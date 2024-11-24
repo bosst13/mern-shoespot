@@ -12,7 +12,7 @@ const OrdersChart = ({ data }) => {
         <YAxis />
         <Tooltip />
         <Legend />
-        <Bar dataKey="quantity" fill="#8884d8" />
+        <Bar dataKey="quantity" fill="#0000FF" />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -53,7 +53,7 @@ const OrdersChartContainer = () => {
     <Card>
       <CardContent>
         <Typography variant="h5" component="div">
-          Orders Chart
+          ShoeSpot Orders Chart
         </Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
           <TextField
