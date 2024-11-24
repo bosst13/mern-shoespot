@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import MUIDataTable from 'mui-datatables';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel, Box, Typography } from '@mui/material';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const ProductTable = () => {
     const [data, setData] = useState([]);
     const [brands, setBrands] = useState([]);  // State to store brands fetched from backend
     const [openDialog, setOpenDialog] = useState(false);
     const [newProduct, setNewProduct] = useState({
+    
+
         name: '',
         description: '',
         price: '',
@@ -17,6 +20,9 @@ const ProductTable = () => {
     });
 
     const [expandedRows, setExpandedRows] = useState([]);
+    const [alertOpen, setAlertOpen] = useState(false);
+    const [alertSeverity, setAlertSeverity] = useState('success');
+    const [alertMessage, setAlertMessage] = useState('');
 
     const API_BASE_URL = import.meta.env.VITE_API;
 
@@ -32,10 +38,30 @@ const ProductTable = () => {
                 description: product.description,
                 images: product.images,
                 action: product.status,
+                reviews: product.reviews || [],  // Ensure reviews array is available
             }));
             setData(products);
         } catch (error) {
             console.error('Error fetching products:', error);
+        }
+    };
+
+    const handleDeleteReview = async (productId, reviewId) => {
+        try {
+            const response = await axios.delete(`http://localhost:5000/api/v1/product/${productId}/review/${reviewId}`);
+            if (response.data.success) {
+                Swal.fire("Success", "Review deleted successfully.", "success");
+                setAlertMessage('Review deleted successfully.');
+                setAlertSeverity('success');
+                setAlertOpen(true);
+                fetchProducts(); // Refresh product data
+            }
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            Swal.fire("Error", "Error deleting review.", "error");
+            setAlertMessage('Error deleting review.');
+            setAlertSeverity('error');
+            setAlertOpen(true);
         }
     };
 
@@ -160,6 +186,46 @@ const ProductTable = () => {
                             ) : (
                                 <p>No images available</p>
                             )}
+
+                        <h4>Reviews:</h4>
+                        {product.reviews && product.reviews.length > 0 ? (
+                            product.reviews.map((review) => (
+                                <Box
+                                    key={review._id}
+                                    display="flex"
+                                    justifyContent="space-between"
+                                    alignItems="center"
+                                    mb={2}
+                                    p={2}
+                                    bgcolor="#fff"
+                                    border="1px solid #ddd"
+                                    borderRadius="4px"
+                                    marginTop="10px"
+                                >
+                                    <Box>
+                                        <Typography variant="body1">
+                                            <strong>User:</strong> {review.name}
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            <strong>Comment:</strong> {review.comment}
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            <strong>Rating:</strong> {review.rating}
+                                        </Typography>
+                                    </Box>
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={() => handleDeleteReview(product.id, review._id)}
+                                    >
+                                        Delete
+                                    </Button>
+                                </Box>
+                            ))
+                        ) : (
+                            <p>No reviews available</p>
+                        )}
+
                         </div>
                     </td>
                 </tr>

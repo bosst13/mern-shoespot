@@ -13,17 +13,28 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  Button,
+  Modal,
+  TextField
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CloseIcon from '@mui/icons-material/Close';
+import Rating from '@mui/material/Rating';
 import axios from 'axios';
 import { auth } from '../../firebaseConfig';
+import Swal from 'sweetalert2';
 
 const OrderHistory = () => {
   const [orderHistory, setOrderHistory] = useState([]);
   const [expandedRow, setExpandedRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState(null);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
+  
 
   useEffect(() => {
     const fetchOrderHistory = async () => {
@@ -86,6 +97,58 @@ const OrderHistory = () => {
     setExpandedRow(expandedRow === rowId ? null : rowId);
   };
 
+  const handleOpenReviewModal = async (product) => {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/product/${product.productId._id}/my-review`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const existingReview = response.data.review;
+
+      setReviewProduct(product);
+      setReviewText(existingReview ? existingReview.comment : '');
+      setReviewRating(existingReview ? existingReview.rating : 0);
+      setReviewModalOpen(true);
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        setReviewProduct(product);
+        setReviewText('');
+        setReviewRating(0);
+        setReviewModalOpen(true);
+      } else {
+        console.error('Error fetching user review:', error);
+        Toast('Failed to fetch review. Please try again.', 'error');
+      }
+    }
+  };
+
+  const handleCloseReviewModal = () => {
+    setReviewModalOpen(false);
+    setReviewProduct(null);
+    setReviewText('');
+    setReviewRating(0);
+  };
+
+  const handleSubmitReview = async () => {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await axios.post(
+        `${import.meta.env.VITE_API}/product/${reviewProduct.productId._id}/review`,
+        { rating: reviewRating, comment: reviewText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      handleCloseReviewModal();
+      Swal.fire('Success', 'Review submitted successfully!', 'success');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      Swal.fire('Error', 'Failed to submit review.', 'error');
+    }
+  };
+
+
   if (loading) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -107,7 +170,15 @@ const OrderHistory = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center', color: 'white'}}>
+      <Typography
+        variant="h4"
+        sx={{
+          mb: 4,
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: 'white',
+        }}
+      >
         Order History
       </Typography>
       <Paper sx={{ width: '100%', boxShadow: 3, minHeight: '70vh' }}>
@@ -127,7 +198,7 @@ const OrderHistory = () => {
             <TableBody>
               {orderHistory.map((order) => (
                 <React.Fragment key={order._id}>
-                  <TableRow hover sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}>
+                  <TableRow hover>
                     <TableCell>{order._id}</TableCell>
                     <TableCell>
                       {new Date(order.timestamp).toLocaleDateString()}
@@ -141,7 +212,9 @@ const OrderHistory = () => {
                       {order.status}
                     </TableCell>
                     <TableCell>
-                      {order.paymentMethod.replace('_', ' ').toUpperCase()}
+                      {order.paymentMethod
+                        ? order.paymentMethod.replace('_', ' ').toUpperCase()
+                        : 'N/A'}
                     </TableCell>
                     <TableCell align="center">
                       <IconButton
@@ -177,23 +250,113 @@ const OrderHistory = () => {
                                 <TableCell>Quantity</TableCell>
                                 <TableCell>Price</TableCell>
                                 <TableCell>Total</TableCell>
+                                {order.status === 'completed' && (
+                                  <TableCell>Review</TableCell>
+                                )}
                               </TableRow>
                             </TableHead>
                             <TableBody>
                               {order.products.map((product, index) => (
                                 <TableRow key={index}>
-                                  <TableCell>{product.productId.name}</TableCell>
+                                  <TableCell>
+                                    {product.productId?.name || 'Unknown'}
+                                  </TableCell>
                                   <TableCell>{product.quantity}</TableCell>
                                   <TableCell>
-                                    ₱{product.productId.price.toFixed(2)}
+                                    ₱{product.productId?.price?.toFixed(2) || '0.00'}
                                   </TableCell>
                                   <TableCell>
-                                    ₱{(
-                                      product.productId.price * product.quantity
+                                    ₱
+                                    {(
+                                      (product.productId?.price || 0) *
+                                      product.quantity
                                     ).toFixed(2)}
                                   </TableCell>
+                                  {order.status === 'completed' && (
+                                    <TableCell>
+                                      <Button
+                                        variant="outlined"
+                                        onClick={() =>
+                                          handleOpenReviewModal(product)
+                                        }
+                                      >
+                                        Rate & Review
+                                      </Button>
+                                    </TableCell>
+                                  )}
                                 </TableRow>
                               ))}
+                              {/* Subtotal, Taxes, Shipping, and Total */}
+                              {(() => {
+                                const subtotal = order.products.reduce(
+                                  (sum, product) =>
+                                    sum +
+                                    (product.productId?.price || 0) *
+                                      product.quantity,
+                                  0
+                                );
+                                const taxRate = 0.05;
+                                const shippingRate = 0.1;
+                                const taxes = subtotal * taxRate;
+                                const shippingFee = subtotal * shippingRate;
+                                const total = subtotal + taxes + shippingFee;
+
+                                return (
+                                  <>
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={3}
+                                        align="right"
+                                        sx={{ fontWeight: 'bold' }}
+                                      >
+                                        Subtotal
+                                      </TableCell>
+                                      <TableCell colSpan={2}>
+                                        ₱{subtotal.toFixed(2)}
+                                      </TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={3}
+                                        align="right"
+                                        sx={{ fontWeight: 'bold' }}
+                                      >
+                                        Shipping Fee
+                                      </TableCell>
+                                      <TableCell colSpan={2}>
+                                        ₱{shippingFee.toFixed(2)}
+                                      </TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={3}
+                                        align="right"
+                                        sx={{ fontWeight: 'bold' }}
+                                      >
+                                        Taxes
+                                      </TableCell>
+                                      <TableCell colSpan={2}>
+                                        ₱{taxes.toFixed(2)}
+                                      </TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                      <TableCell
+                                        colSpan={3}
+                                        align="right"
+                                        sx={{ fontWeight: 'bold' }}
+                                      >
+                                        Grand Total
+                                      </TableCell>
+                                      <TableCell
+                                        colSpan={2}
+                                        sx={{ fontWeight: 'bold' }}
+                                      >
+                                        ₱{total.toFixed(2)}
+                                      </TableCell>
+                                    </TableRow>
+                                  </>
+                                );
+                              })()}
                             </TableBody>
                           </Table>
                         </Box>
@@ -206,6 +369,73 @@ const OrderHistory = () => {
           </Table>
         </TableContainer>
       </Paper>
+
+      <Modal open={reviewModalOpen} onClose={handleCloseReviewModal}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+            position: 'relative',
+          }}
+        >
+          {/* Close button */}
+          <IconButton
+            onClick={handleCloseReviewModal}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: 'gray',
+            }}
+            aria-label="close"
+          >
+            <CloseIcon />
+          </IconButton>
+
+          {/* Modal content */}
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Review {reviewProduct?.productId?.name || 'Product'}
+          </Typography>
+          <TextField
+            fullWidth
+            label="Review"
+            multiline
+            rows={4}
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            sx={{ my: 2 }}
+          />
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Rating:
+          </Typography>
+          {/* Rating Component */}
+          <Rating
+            name="user-rating"
+            value={reviewRating}
+            onChange={(event, newValue) => {
+              setReviewRating(newValue); // Update the rating state when a star is clicked
+            }}
+            precision={1} // Set rating precision to 1
+            max={5} // Maximum 5 stars
+            size="large" // Adjust star size
+          />
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSubmitReview}
+            sx={{ mt: 2 }}
+          >
+            Submit Review
+          </Button>
+        </Box>
+      </Modal>
     </Box>
   );
 };

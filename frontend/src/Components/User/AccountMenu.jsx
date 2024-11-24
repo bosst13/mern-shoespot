@@ -1,10 +1,7 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import ListItemIcon from '@mui/material/ListItemIcon';
+import { Box, Typography, Avatar } from '@mui/material';
+import { Menu, MenuItem, ListItemIcon } from '@mui/material';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
@@ -12,6 +9,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Logout from '@mui/icons-material/Logout';
 import Email from '@mui/icons-material/Email';
 import Lock from '@mui/icons-material/Lock';
+import Edit from '@mui/icons-material/Edit';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useAuth } from '../../context/AuthContext'; // Correct import path
 import axios from 'axios'; // You might need to install axios if you don't have it
@@ -128,14 +126,64 @@ export default function AccountMenu() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
+        <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          p: 2,
+          borderBottom: '1px solid #ddd',
+        }}
+      >
+        <Avatar
+          src={user?.avatarURL || '/images/default-avatar.png'}
+          sx={{
+            width: 80,
+            height: 80,
+            mb: 1,
+            border: '3px solid #4caf50',
+          }}
+        />
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 'bold',
+            textTransform: 'capitalize',
+          }}
+        >
+          {user?.username || 'Unknown User'}
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: user?.role === 'admin' ? '#ff5722' : '#607d8b',
+            textTransform: 'uppercase',
+            fontWeight: '500',
+          }}
+        >
+          {user?.role || 'Guest'}
+        </Typography>
+      </Box>
+
+        <Divider />
         <MenuItem onClick={handleProfile}>
-          <Avatar /> Profile
+          <ListItemIcon>
+            <Edit fontSize="small" />
+          </ListItemIcon>
+          Edit Profile
         </MenuItem>
         <MenuItem onClick={handleOrderHistory}>
           <ListItemIcon>
             <ListAltIcon fontSize="small" />
           </ListItemIcon>
           Order History
+          <MenuItem onClick={handleDashboard}>
+          <ListItemIcon>
+            <DashboardIcon fontSize="small" />
+          </ListItemIcon>
+          Dashboard
+        </MenuItem>
         </MenuItem>
         <MenuItem onClick={handleUpdateEmail}>
           <ListItemIcon>
@@ -148,12 +196,6 @@ export default function AccountMenu() {
             <Lock fontSize="small" />
           </ListItemIcon>
           Change Password
-        </MenuItem>
-        <MenuItem onClick={handleDashboard}>
-          <ListItemIcon>
-            <DashboardIcon fontSize="small" />
-          </ListItemIcon>
-          Dashboard
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>

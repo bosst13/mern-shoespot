@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext'; // Correct import path
+import { useAuth } from '../../context/AuthContext'; 
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; // Correct import path
+import { db } from '../../firebaseConfig';
 import { CircularProgress, Typography, Button, Card, CardContent, Snackbar, Alert, Box } from '@mui/material'; 
-import UpdateProfileForm from './UpdateProfileForm'; // Import the UpdateProfileForm component
+import UpdateProfileForm from './UpdateProfileForm';
 import { UploadFile } from '@mui/icons-material';
-import EditIcon from '@mui/icons-material/Edit'; // Import EditIcon
+import EditIcon from '@mui/icons-material/Edit'; 
 import { styled } from '@mui/system';
 import '../../Auth.css';
 
@@ -16,16 +16,18 @@ const Input = styled('input')({
 const Profile = () => {
   const { user, handleUpdate } = useAuth();
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
-  const [editing, setEditing] = useState(false); // Add editing state
-  const [snackbarOpen, setSnackbarOpen] = useState(false); // Add Snackbar state
+  const [loading, setLoading] = useState(true); 
+  const [editing, setEditing] = useState(false); 
+  const [snackbarOpen, setSnackbarOpen] = useState(false); 
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (user) {
+      if (user && user.uid) {
+        console.log('Fetching data for user:', user);
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
+            console.log('User document data:', userDoc.data());
             setUserData(userDoc.data());
           } else {
             console.log('No such document!');
@@ -33,10 +35,10 @@ const Profile = () => {
         } catch (error) {
           console.error('Error fetching user data:', error);
         } finally {
-          setLoading(false); // Set loading to false after fetching data
+          setLoading(false);
         }
       } else {
-        setLoading(false); // Set loading to false if user is not logged in
+        setLoading(false);
       }
     };
 
@@ -48,27 +50,13 @@ const Profile = () => {
     handleUpdate({ file });
   };
 
-  // const handleUpdateSuccess = async (updatedData) => {
-  //   try {
-  //     const userDocRef = doc(db, 'users', user.uid);
-  //     await updateDoc(userDocRef, updatedData); // Update in Firebase
-  //     setUserData((prev) => ({ ...prev, ...updatedData })); // Update local state
-  //     setSnackbarOpen(true); // Show success message
-  //   } catch (error) {
-  //     console.error('Error updating user data:', error);
-  //   }
-  // };  
-
-  const handleUpdateSuccess = async (updatedData) => {
+   const handleUpdateSuccess = async (updatedData) => {
     try {
-      // Check if there's a file in updatedData
       let avatarURL = updatedData.avatarURL || user.photoURL;
   
       if (updatedData.file) {
-        // Extract the file and remove it from updatedData
         const { file, ...dataWithoutFile } = updatedData;
   
-        // Step 1: Upload the file to Cloudinary via your backend
         const formData = new FormData();
         formData.append('image', file);
   
@@ -83,36 +71,31 @@ const Profile = () => {
         }
   
         const data = await response.json();
-        avatarURL = data.secure_url; // Extract the secure URL from the response
-  
-        // Step 2: Add the avatar URL to updatedData
+        avatarURL = data.secure_url; 
         updatedData = { ...dataWithoutFile, avatarURL };
       }
-  
-      // Step 3: Update Firestore
+
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, updatedData);
   
-      // Update local state
       setUserData((prev) => ({ ...prev, ...updatedData }));
-      setSnackbarOpen(true); // Show success message
+      setSnackbarOpen(true);
     } catch (error) {
       console.error('Error updating user data:', error.message);
       alert('Failed to update profile: ' + error.message);
     }
   };
-  
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
   };
 
   if (loading) {
-    return <CircularProgress />; // Show loading spinner
+    return <CircularProgress />;
   }
 
   if (!userData) {
-    return <div>No user data found.</div>; // Show message if no user data is found
+    return <div>No user data found.</div>;
   }
 
   return (
@@ -134,14 +117,14 @@ const Profile = () => {
             Email: {userData.email}
           </Typography>
           {editing ? (
-            <UpdateProfileForm userData={userData} onUpdate={handleUpdateSuccess} onCancel={() => setEditing(false)} /> // Pass onCancel prop
+            <UpdateProfileForm userData={userData} onUpdate={handleUpdateSuccess} onCancel={() => setEditing(false)} />
           ) : (
             <Button
               variant="contained"
               color="primary"
               className="profile-edit-button"
               onClick={() => setEditing(true)}
-              startIcon={<EditIcon />} // Add EditIcon to the button
+              startIcon={<EditIcon />}
             >
               Edit Profile
             </Button>

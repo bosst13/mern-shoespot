@@ -191,9 +191,9 @@ const Products = () => {
                 <div className="product-rating">
                   {Array.from({ length: 5 }, (_, index) =>
                     index < product.ratings ? (
-                      <StarIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
+                      <StarIcon key={index} className="product-stars" style={{ color: 'blue' }} />
                     ) : (
-                      <StarBorderIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
+                      <StarBorderIcon key={index} className="product-stars" style={{ color: 'blue' }} />
                     )
                   )}
                   <span className="product-numOfReviews">({product.numOfReviews})</span>

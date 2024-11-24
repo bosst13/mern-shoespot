@@ -123,7 +123,7 @@ exports.uploadAvatar = [
     }
   }
 ];
-
+//modified
 exports.getCurrentUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;

@@ -9,7 +9,8 @@ import {
   Modal,
   Box,
   TextField,
-  Button
+  Button,
+  Avatar
 } from '@mui/material';
 import Toast from "../Layout/Toast";
 import Swal from 'sweetalert2';
@@ -24,6 +25,7 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
   const [quantity, setQuantity] = useState(1); // Default quantity
   const { user } = useAuth(); // Get the currently logged-in user
   const navigate = useNavigate();
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     Swal.fire({
@@ -34,22 +36,46 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
       }
     });
 
-    const fetchProduct = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API}/product/${id}`);
-        setProduct(response.data.product);
-        setLoading(false);
-        Swal.close();
-      } catch (error) {
-        console.error("Error fetching product details:", error);
-        setLoading(false);
-        Swal.close();
-        Toast("Failed to load products", "error");
-      }
-    };
+  //   const fetchProduct = async () => {
+  //     try {
+  //       const response = await axios.get(${import.meta.env.VITE_API}/product/${id});
+  //       setProduct(response.data.product);
+  //       setLoading(false);
+  //       Swal.close();
+  //     } catch (error) {
+  //       console.error("Error fetching product details:", error);
+  //       setLoading(false);
+  //       Swal.close();
+  //       Toast("Failed to load products", "error");
+  //     }
+  //   };
 
-    fetchProduct();
-  }, [id]);
+  //   fetchProduct();
+  // }, [id]);
+
+
+  const fetchProductAndReviews = async () => {
+    try {
+      // Fetch product details
+      const productResponse = await axios.get(`${import.meta.env.VITE_API}/product/${id}`);
+      setProduct(productResponse.data.product);
+
+      // Fetch reviews for the product
+      const reviewsResponse = await axios.get(`${import.meta.env.VITE_API}/product/${id}/reviews`);
+      setReviews(reviewsResponse.data.reviews);
+
+      setLoading(false);
+      Swal.close();
+    } catch (error) {
+      console.error("Error fetching product details or reviews:", error);
+      setLoading(false);
+      Swal.close();
+      Toast("Failed to load product details or reviews", "error");
+    }
+  };
+
+  fetchProductAndReviews();
+}, [id]);
 
   const handleAddToOrderList = async () => {
     try {
@@ -57,9 +83,13 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
         Toast("You must be logged in to add to the order list.", "error");
         return;
       }
+
+      console.log("User object:", user);
+      console.log("Product ID:", product._id);
+      console.log("Quantity:", quantity);
   
       // Log the Firebase token
-      const token = await user.getIdToken();
+      const token = localStorage.getItem("token");
       console.log("Firebase Token:", token);
   
       // Fetch the user_id from the backend
@@ -94,7 +124,9 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
       onUpdateOrderCount(); // Update the order count
     } catch (error) {
       console.error("Error adding product to order list:", error.response?.data || error.message);
-      Toast("Failed to add product to order list.", "error");
+      // Toast("Failed to add product to order list.", "error");
+      Toast(error.response?.data?.message || "Failed to add product to order list.", "error");
+
     }
   };  
 
@@ -150,12 +182,66 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
           <p className="product-price">₱{product.price}</p>
           <button
             className="order-button"
-            onClick={() => setModalOpen(true)} // Open the modal
+            onClick={() => setModalOpen(true)}
           >
             Add to Order List
           </button>
           <button className="buy-button">Buy Now</button>
         </div>
+      </div>
+
+      {/* Display Reviews */}
+      <div className="reviews-section">
+        <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+          Reviews
+        </Typography>
+        {reviews.length === 0 ? (
+          <Typography>No reviews yet. Be the first to review this product!</Typography>
+        ) : (
+          reviews.map((review, index) => (
+            <Box
+              key={index}
+              sx={{
+                mb: 2,
+                p: 2,
+                border: '1px solid #ddd',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 2,
+                backgroundColor: '#444',
+              }}
+            >
+              {/* Show avatar fetched from the review */}
+              <Avatar
+                sx={{ width: 48, height: 48 }}
+                src={review.avatarURL || '/images/default-avatar.png'} // Use review.avatarURL
+                alt={review.name} // Fallback alt text
+              />
+              <div>
+                <Typography variant="body1" fontWeight="bold">
+                  {review.name}
+                </Typography>
+                {/* Display stars for the rating */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Typography
+                      key={i}
+                      sx={{
+                        color: i < review.rating ? '#FFD700' : '#DDDDDD', // Gold for filled, gray for unfilled
+                        fontSize: 20,
+                        mr: 0.5,
+                      }}
+                    >
+                      ★
+                    </Typography>
+                  ))}
+                </Box>
+                <Typography variant="body2">{review.comment}</Typography>
+              </div>
+            </Box>
+          ))
+        )}
       </div>
 
       {/* Modal for Adding to Order List */}
@@ -189,7 +275,7 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
               const value = Math.max(0, parseInt(e.target.value, 10)); // Prevent values less than 0
               setQuantity(value || 0); // Default to 0 if input is invalid
             }}
-            inputProps={{ min: 0 }} // Enforce minimum of 0
+            inputProps={{ min: 0 }}
             fullWidth
             margin="normal"
           />

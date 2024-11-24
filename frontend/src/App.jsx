@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Home from './Components/Home';
 import Header from './Components/Layout/Header';
 import Footer from './Components/Layout/Footer';
@@ -24,13 +24,39 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { useAuth } from './context/AuthContext';
+import OrdersChart from './Components/Admin/OrdersChart';
+import StatusTable from './Components/Admin/StatusTable';  // Import the StatusTable component
 
 const AppContent = () => {
   const location = useLocation(); // Track the current route
   const [currentUser, setCurrentUser] = useState(null); // Track the logged-in user
   const [orderCount, setOrderCount] = useState(0); // Track the total order count
-  const { user } = useAuth();
+  const [orderData, setOrderData] = useState([]);
+
+
+  const fetchOrderData = async () => {
+    // try {
+    //   const token = await currentUser.getIdToken();
+    //   const response = await axios.get(${import.meta.env.VITE_API}/admin/orders/data, {
+    //     headers: {
+    //       Authorization: Bearer ${token},
+    //     },
+    //   });
+    //   setOrderData(response.data);
+    // } catch (error) {
+    //   console.error('Error fetching order data:', error);
+    // }
+  };
+  
+  useEffect(() => {
+    if (currentUser) {
+      fetchOrderData();
+    }
+  }, [currentUser]);
+
+
+
+
 
   // Fetch the order count from the backend
   const fetchOrderCount = async () => {
@@ -97,26 +123,21 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
-        <Route path="/product/:id" element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />}/>
+        <Route
+          path="/product/:id"
+          element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />}
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/order-history" element={<OrderHistory />} />
         <Route path="/update-email" element={<UpdateEmail />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        
-                <Route element={<RequireAuth allowedRoles={['user']} />}>
-                    <Route path="/" element={<Home />} />
-                </Route>
-                <Route element={<RequireAuth allowedRoles={['admin']} />}>
-                    <Route path="/admin/dashboard" element={<Dashboard />} />
-                </Route>
-
-    {/* Fallback route */}
-    <Route path="*" element={<Navigate to="/" replace />} />
-</Routes>;
+        <Route path="/admin/dashboard" element={<Dashboard />} />
+        <Route path="/admin/orders-chart" element={<OrdersChart data={orderData} />} />
+        <Route path="/admin/status-table" element={<StatusTable />} />  // Add the new route
+        </Routes>
       {!hideHeaderFooter && <Footer />}
       <ToastContainer />
     </>

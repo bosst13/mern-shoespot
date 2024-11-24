@@ -8,7 +8,8 @@ import {
   Checkbox,
   Button,
 } from '@mui/material';
-import { Delete, Close, RestaurantMenu } from '@mui/icons-material';
+import { Delete, Close } from '@mui/icons-material';
+import { FaShoppingCart } from 'react-icons/fa';  // Import FaShoppingCart icon
 import axios from 'axios';
 import Toast from '../Layout/Toast';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
@@ -28,7 +29,7 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
         return;
       }
 
-      const token = await user.getIdToken();
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${import.meta.env.VITE_API}/user-orderlist`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -44,6 +45,60 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
       setLoading(false);
     }
   };
+
+    // Function to delete an order
+    const handleDeleteOrder = async (orderId) => {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`${import.meta.env.VITE_API}/delete-order/${orderId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        // Update the order list after successful deletion
+        setOrderList((prev) => prev.filter((order) => order.order_id !== orderId));
+        Toast("Order deleted successfully.", "success");
+  
+        // Update the total order count (if applicable)
+        if (onUpdateOrderCount) {
+          onUpdateOrderCount();
+        }
+      } catch (error) {
+        console.error("Error deleting order:", error);
+        Toast("Failed to delete the order.", "error");
+      }
+    };
+  
+    // Function to update the quantity
+    const handleUpdateQuantity = async (orderId, quantity) => {
+      try {
+        if (quantity <= 0) {
+          Toast("Quantity must be greater than 0.", "error");
+          return;
+        }
+  
+        const token = localStorage.getItem('token');
+        const response = await axios.put(
+          `${import.meta.env.VITE_API}/update-order/${orderId}`,
+          { quantity },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+            );
+            setOrderList((prev) =>
+              prev.map((order) =>
+                order.order_id === orderId ? { ...order, quantity } : order
+              )
+            );
+            Toast("Order quantity updated successfully.", "success");
+          } catch (error) {
+            console.error("Error updating order quantity:", error);
+            Toast("Failed to update order quantity.", "error");
+          }
+        };
 
   const calculateTotalPrice = () => {
     return selectedOrders
@@ -98,12 +153,12 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
               position: 'absolute',
               top: 8,
               left: 8,
-              border: '2px solid gold',
+              border: '2px solid blue', // Changed from gold to blue
               borderRadius: '50%',
               padding: '5px',
             }}
           >
-            <Close sx={{ color: 'gold' }} />
+            <Close sx={{ color: 'blue' }} /> {/* Changed color to blue */}
           </IconButton>
           <Typography
             variant="h6"
@@ -123,9 +178,9 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
                 color: 'gray',
               }}
             >
-              <RestaurantMenu sx={{ fontSize: 60, color: 'gold', mb: 2 }} />
+              <FaShoppingCart sx={{ fontSize: 60, color: 'blue', mb: 2 }} /> {/* Changed to blue */}
               <Typography variant="subtitle1" sx={{ color: 'white', textAlign: 'center' }}>
-                Empty! Add products from the menu first.
+                Empty! Add shoes in your cart first.
               </Typography>
             </Box>
           ) : (
@@ -154,8 +209,8 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
                     )
                   }
                   sx={{
-                    color: 'gold',
-                    '&.Mui-checked': { color: 'gold' },
+                    color: 'blue', // Changed to blue
+                    '&.Mui-checked': { color: 'blue' }, // Changed to blue
                   }}
                 />
                 <img
@@ -169,7 +224,7 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
                   }}
                 />
                 <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="subtitle1" sx={{ color: 'gold', fontWeight: 'bold' }}>
+                  <Typography variant="subtitle1" sx={{ color: 'blue', fontWeight: 'bold' }}>
                     {order.product.name}
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'lightgray' }}>
@@ -177,10 +232,37 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
                     <b>₱{order.product.price * order.quantity}</b>
                   </Typography>
                 </Box>
+                <TextField
+                  type="number"
+                  value={order.quantity}
+                  onChange={(e) => handleUpdateQuantity(order.order_id, parseInt(e.target.value))}
+                  size="small"
+                  sx={{
+                    width: 60,
+                    mr: 2,
+                    '& .MuiInputBase-input': { color: 'white' },
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: 'lightgray' },
+                      '&:hover fieldset': { borderColor: 'white' },
+                    },
+                  }}
+                />
+
+                
+              {/* Delete Button */}
+              <IconButton
+                  color="error"
+                  onClick={() => handleDeleteOrder(order.order_id)}
+                  sx={{ '&:hover': { backgroundColor: 'rgba(255, 0, 0, 0.2)' } }}
+                >
+                  <Delete sx={{ color: 'red' }} />
+                </IconButton>
               </Box>
             ))
           )}
         </Box>
+
+
 
         {/* Footer Total and Order Button */}
         <Box
@@ -201,9 +283,9 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
             color="warning"
             sx={{
               fontWeight: 'bold',
-              bgcolor: 'gold',
-              color: 'black',
-              '&:hover': { bgcolor: '#f1c40f' },
+              bgcolor: 'blue', // Changed to blue
+              color: 'white',
+              '&:hover': { bgcolor: '#3498db' }, // Changed hover color to a blue shade
             }}
             onClick={handleOrder}
           >
@@ -214,5 +296,6 @@ const CartSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount })
     </Drawer>
   );
 };
+
 
 export default CartSidebar;

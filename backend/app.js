@@ -9,7 +9,7 @@ const products = require('./routes/product');
 const authRoute = require('./routes/authRoute');
 const orderListRoutes = require('./routes/orderlist');
 // const orderRoutes = require('./routes/order');
-
+const orderRoutes = require('./routes/orderRoutes');
 const order = require('./routes/order');
 
 app.use(express.urlencoded({limit: "50mb", extended: true }));
@@ -33,6 +33,8 @@ app.use('/api/v1', products);
 app.use('/api/auth', authRoute);
 app.use('/api/v1', orderListRoutes);
 // app.use('/api/v1', orderRoutes);
+
+app.use('/api/v1', orderRoutes);
 
 app.use('/api/v1', order);
 

@@ -41,7 +41,7 @@ const CheckoutPage = () => {
     if (user) {
       try {
         const token = await user.getIdToken();
-        axios.defaults.headers.common['Authorization'] =  `Bearer ${token}`;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } catch (error) {
         console.error('Error setting Axios Authorization header:', error);
       }

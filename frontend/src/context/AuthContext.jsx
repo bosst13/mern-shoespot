@@ -15,40 +15,37 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
+    const [firebaseUser, setFirebaseUser] = useState(null);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                console.log('AuthContext: Current User UID:', currentUser.uid);
-    
                 try {
                     const token = await currentUser.getIdToken();
-                    setToken(token);
                     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     
                     const response = await axios.get(`http://localhost:5000/api/auth/me`);
-                    const userData = response.data;
+                    const userData = response.data.user;
     
-                    // Log userData for debugging
-                    console.log('AuthContext: Fetched User Data from MongoDB:', userData);
+                    console.log('AuthContext: Fetched User Data:', userData);
     
-                    // Update user context with role
-                    setUser({ ...userData }); // This ensures role and other user data is properly set
+                    // Add UID from Firebase Auth to user data
+                    setUser({ ...userData, uid: currentUser.uid });
+                    setFirebaseUser(currentUser); 
                 } catch (error) {
                     console.error('AuthContext: Error fetching user data:', error);
+                    setUser(null);
+                    setFirebaseUser(null); 
                 }
             } else {
-                console.log('AuthContext: No user is logged in');
-                setToken(null);
                 setUser(null);
-                delete axios.defaults.headers.common['Authorization'];
+                setFirebaseUser(null); 
             }
         });
     
         return () => unsubscribe();
     }, []);
     
-
     const reloadUser = async () => {
         if (!auth.currentUser) {
             console.error("No user is currently logged in.");
@@ -85,6 +82,7 @@ export const AuthProvider = ({ children }) => {
             // Update context and local storage
             setToken(token);
             setUser({ ...userData, role });
+            setFirebaseUser(currentUser); 
             localStorage.setItem('token', token);
     
             return role; // Return the role for navigation
@@ -144,6 +142,7 @@ export const AuthProvider = ({ children }) => {
     
             setToken(token);
             setUser(user);
+            setFirebaseUser(user);
             localStorage.setItem('token', token); // Store token in local storage
         } catch (error) {
             console.error("Error logging in with Google: ", error);
@@ -303,6 +302,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('token');
             setToken(null);
             setUser(null);
+            setFirebaseUser(null);
         } catch (error) {
             console.error("Error logging out: ", error);
             alert('Failed to log out: ' + error.message);
@@ -314,6 +314,7 @@ export const AuthProvider = ({ children }) => {
             value={{
                 user,
                 token,
+                firebaseUser,
                 handleUpdate,
                 login,
                 loginWithGoogle,
