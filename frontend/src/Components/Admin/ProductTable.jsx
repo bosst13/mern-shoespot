@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MUIDataTable from 'mui-datatables';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Select, MenuItem, FormControl, InputLabel, Alert, Snackbar, Box, LinearProgress, Typography } from '@mui/material';
 import axios from 'axios';
-import swal from 'sweetalert2';
+import Swal from 'sweetalert2';
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx'; // Adjust the import path
 
 const ProductTable = () => {
@@ -45,6 +45,7 @@ const ProductTable = () => {
                 description: product.description, // Add description
                 images: product.images, // Add images
                 action: product.status,
+                reviews: product.reviews || []
             }));
             setData(products);
         } catch (error) {
@@ -162,7 +163,7 @@ const ProductTable = () => {
     };
 // Handle Delete Product with confirmation
 const handleDeleteProduct = (productId) => {
-    swal({
+    Swal.fire({
         title: "Are you sure?",
         text: "Once deleted, you will not be able to recover this product!",
         icon: "warning",
@@ -175,32 +176,49 @@ const handleDeleteProduct = (productId) => {
                 const response = await axios.delete(`http://localhost:5000/api/v1/admin/product/delete/${productId}`);
                 if (response.data.success) {
                     fetchProducts();  // Refresh products list
-                    swal("Poof! Your product has been deleted!", {
+                    Swal.fire("Poof! Your product has been deleted!", {
                         icon: "success",
                     });
                 }
             } catch (error) {
                 console.error('Error deleting product:', error);
-                swal("Error! Your product could not be deleted!", {
+                Swal.fire("Error! Your product could not be deleted!", {
                     icon: "error",
                 });
             }
         } else {
-            swal("Your product is safe!");
+            Swal.fire("Your product is safe!");
         }
     });
+};
+
+const handleDeleteReview = async (productId, reviewId) => {
+    try {
+        const response = await axios.delete(`http://localhost:5000/api/v1/product/${productId}/review/${reviewId}`);
+        if (response.data.success) {
+            fetchProducts();  // Refresh products list
+            Swal.fire("Poof! Your review has been deleted!", {
+                icon: "success",
+            });
+        }
+    } catch (error) {
+        console.error('Error deleting review:', error);
+        Swal.fire("Error! Your product could not be deleted!", {
+            icon: "error",
+        });
+    }
 };
 
 // Handle Bulk Delete Products with confirmation
 const handleBulkDeleteProducts = async () => {
     if (selectedRows.length === 0) {
-        swal("No products selected for deletion!", {
+        Swal.fire("No products selected for deletion!", {
             icon: "warning",
         });
         return;
     }
 
-    swal({
+    Swal.fire({
         title: "Are you sure?",
         text: "Once deleted, you will not be able to recover these products!",
         icon: "warning",
@@ -214,18 +232,18 @@ const handleBulkDeleteProducts = async () => {
                 if (response.data.success) {
                     fetchProducts();  // Refresh products list
                     setSelectedRows([]);  // Clear selected rows after successful deletion
-                    swal("Poof! Your selected products have been deleted!", {
+                    Swal.fire("Poof! Your selected products have been deleted!", {
                         icon: "success",
                     });
                 }
             } catch (error) {
                 console.error('Error deleting products:', error);
-                swal("Error! Your selected products could not be deleted!", {
+                Swal.fire("Error! Your selected products could not be deleted!", {
                     icon: "error",
                 });
             }
         } else {
-            swal("Your selected products are safe!");
+            Swal.fire("Your selected products are safe!");
         }
     });
 };
@@ -305,6 +323,8 @@ const handleBulkDeleteProducts = async () => {
         }}}
     ];
 
+    //BAGO LANG TO
+
     const options = {
         selectableRows: 'multiple',  // Enable row selection for bulk delete
         onRowsDelete: (rowsDeleted) => {
@@ -335,6 +355,45 @@ const handleBulkDeleteProducts = async () => {
                                 ))
                             ) : (
                                 <p>No images available</p>
+                            )}
+
+<h4>Reviews:</h4>
+                            {product.reviews?.length > 0 ? (
+                                product.reviews.map((review, index) => (
+                                    <Box
+                                        key={index}
+                                        display="flex"
+                                        justifyContent="space-between"
+                                        alignItems="center"
+                                        mb={2}
+                                        p={2}
+                                        bgcolor="#fff"
+                                        border="1px solid #ddd"
+                                        borderRadius="4px"
+                                        marginTop="10px"
+                                    >
+                                        <Box>
+                                            <Typography variant="body1">
+                                                <strong>User:</strong> {review.name}
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                <strong>Comment:</strong> {review.comment}
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                <strong>Rating:</strong> {review.rating} / 5
+                                            </Typography>
+                                        </Box>
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            onClick={() => handleDeleteReview(product.id, review._id)}
+                                        >
+                                            Delete Review
+                                        </Button>
+                                    </Box>
+                                ))
+                            ) : (
+                                <p>No reviews available</p>
                             )}
                         </div>
                     </td>

@@ -93,12 +93,12 @@ const Sidebar = ({ onButtonClick }) => {
                             >
                                 <ListItemText primary="Manage Orders" />
                             </ListItemButton>
-                            <ListItemButton
+                            {/* <ListItemButton
                                 sx={{ pl: 4 }}
                                 onClick={() => onButtonClick('users')}
                             >
                                 <ListItemText primary="Manage Users" />
-                            </ListItemButton>
+                            </ListItemButton> */}
                         </List>
                     </Collapse>
                     <ListItem disablePadding>

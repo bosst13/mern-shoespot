@@ -37,6 +37,7 @@ const protect = async (req, res, next) => {
     // Attach the user object to the request
     req.user = user;
 
+
     next(); // Continue to the next middleware
   } catch (error) {
     console.error('Error in protect middleware:', error);
