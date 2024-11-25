@@ -1,33 +1,39 @@
+const Order = require('../models/Order');
+const User = require('../models/UserModel');
+const { admin, db } = require('../utils/firebaseConfig');
 
-const Order = require('../models/Order');  // Import the Order model
-const User = require('../models/UserModel');  // Import the User model
-const { admin, db} = require('../utils/firebaseConfig');
-// Aggregated order status counts
 const getOrdersData = async (req, res) => {
   try {
     const orders = await Order.aggregate([
       {
         $group: {
-          _id: "$status",  // Group by the 'status' field
-          count: { $sum: 1 },  // Count the number of orders in each status group
+          _id: "$status",
+          count: { $sum: 1 },
         }
       },
       {
-        $sort: { _id: 1 }  // Optionally, sort by status or another field
+        $sort: { _id: 1 }
       }
     ]);
-    res.json(orders);  // Send aggregated data as JSON response
+    res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: error.message });  // Handle any errors
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Get all orders with populated product and user info
 const getAllOrders = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const query = {};
 
+   
+    if (startDate && isNaN(Date.parse(startDate))) {
+      return res.status(400).json({ message: "Invalid startDate format" });
+    }
+    if (endDate && isNaN(Date.parse(endDate))) {
+      return res.status(400).json({ message: "Invalid endDate format" });
+    }
+
+    const query = {};
     if (startDate) {
       query.createdAt = { $gte: new Date(startDate) };
     }
@@ -48,6 +54,12 @@ const getAllOrders = async (req, res) => {
       }
 
       order.products.forEach(product => {
+    
+        if (!product.productId) {
+          console.warn(`Product ID is null for order ${order._id}`);
+          return;
+        }
+
         const productId = product.productId._id.toString();
         if (!acc[month].products[productId]) {
           acc[month].products[productId] = { name: product.productId.name, quantity: 0 };
@@ -58,6 +70,7 @@ const getAllOrders = async (req, res) => {
       return acc;
     }, {});
 
+    // Format the grouped data into the required response structure
     const groupedOrders = Object.values(ordersByMonth).map(monthData => {
       const mostBoughtProduct = Object.values(monthData.products).reduce((max, product) => {
         return product.quantity > max.quantity ? product : max;
@@ -66,39 +79,39 @@ const getAllOrders = async (req, res) => {
       return {
         month: monthData.month,
         mostBoughtProduct: mostBoughtProduct.name,
-        quantity: mostBoughtProduct.quantity
+        quantity: mostBoughtProduct.quantity,
       };
     });
 
     res.json(groupedOrders);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error in getAllOrders:", error.stack); // Log full error details
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-// Get all distinct statuses of the products with corresponding IDs
 const getAllStatuses = async (req, res) => {
     try {
       const statuses = await Order.aggregate([
         {
-          $unwind: "$products"  // Deconstruct the products array field
+          $unwind: "$products"
         },
         {
           $lookup: {
-            from: 'products',  // The name of the products collection
+            from: 'products',
             localField: 'products.productId',
             foreignField: '_id',
             as: 'productDetails'
           }
         },
         {
-          $unwind: "$productDetails"  // Deconstruct the productDetails array field
+          $unwind: "$productDetails"
         },
         {
           $group: {
-            _id: "$_id",  // Group by order ID
-            status: { $first: "$status" },  // Get the status for each order
-            products: { $push: "$productDetails.name" }  // Collect all product names for each order
+            _id: "$_id",
+            status: { $first: "$status" },
+            products: { $push: "$productDetails.name" } 
           }
         },
         {
@@ -110,9 +123,9 @@ const getAllStatuses = async (req, res) => {
           }
         }
       ]);
-      res.json(statuses);  // Send order IDs with corresponding status and product names as JSON response
+      res.json(statuses);
     } catch (error) {
-      res.status(500).json({ message: error.message });  // Handle any errors
+      res.status(500).json({ message: error.message });
     }
   };
 
@@ -120,7 +133,7 @@ const getAllStatuses = async (req, res) => {
     try {
       const { orderId } = req.params;
       const { status } = req.body;
-    
+  
       // Find and update the order status
       const updatedOrder = await Order.findByIdAndUpdate(
         orderId,
@@ -147,6 +160,10 @@ const getAllStatuses = async (req, res) => {
             body: `Your order ${orderId} has been ${status}.`,
           },
           token: fcmToken,
+          data: {
+          userId: updatedOrder.userId.toString(),
+          orderId: orderId.toString(),
+          },
         };
   
         // Send notification via FCM
@@ -163,5 +180,6 @@ const getAllStatuses = async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   };
+  
   
   module.exports = { getOrdersData, getAllOrders, getAllStatuses, updateOrderStatus };
